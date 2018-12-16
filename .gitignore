@@ -1,3 +1,5 @@
+login.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -7,6 +9,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+.vs/
 .Python
 build/
 develop-eggs/
