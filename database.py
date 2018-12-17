@@ -74,7 +74,6 @@ class Database:
         self.cursor.execute("SELECT users.user_name, users.lambda, COUNT(users.user_name) FROM lambdas INNER JOIN users ON users.userID = lambdas.userID GROUP BY users.user_name;")
         return self.cursor.fetchall()
 
-
     def update_stats(self):
         query = """INSERT INTO stats (lambdaCount, helpGiven, uniqueUsers, date) VALUES (
         (SELECT SUM(lambda) FROM users),
@@ -84,3 +83,7 @@ class Database:
 
         self.cursor.execute(query)
         self.connection.commit()
+
+    def get_stats(self):
+        self.cursor.execute("SELECT * FROM stats;")
+        return self.cursor.fetchall()

@@ -1,5 +1,10 @@
+from mpl_toolkits.axes_grid1 import host_subplot
+import mpl_toolkits.axisartist as AA
+from imgurpython import ImgurClient
+import matplotlib.pyplot as plt
 from operator import itemgetter
 from database import Database
+import matplotlib
 import datetime
 import login
 import time
@@ -37,22 +42,51 @@ def update_users_flair(comment):
 def get_mods():
     return [str(i) for i in subreddit.moderator()] + ["AutoModerator"]
 
-def update_tables():
+def _make_graph(data):
+    fig = plt.figure()
+    
+    lambdaCount = [i[1] for i in data]
+    helpGiven = [i[2] for i in data]
+    uniqueUsers = [i[3] for i in data]
+    date = [datetime.datetime.strptime(i[4], "%Y-%m-%d") for i in data]
+
+    fig, ax1 = plt.subplots()
+    ax1.plot(date, lambdaCount, label = "Total λ given", color = "r")
+    ax1.set_ylabel("Total λ / help given")
+
+    ax1.plot(date, helpGiven, label = "Times help given", color = "g")
+    
+    ax2 = ax1.twinx()
+    ax2.plot(date, uniqueUsers, label = "Unique users")
+    ax2.set_ylabel("No. Unique Users")
+
+    ax1.legend()
+    ax2.legend(loc = 4)
+    fig.autofmt_xdate()
+
+    filepath = "graph.png"
+    fig.savefig(filepath)
+    return filepath
+
+def _update_tables(scores, data):
     content = ""
     date = str(datetime.date.today())
     mods = get_mods()
-    data = db.get_scores()
-    bylambda = [i for i in sorted(data, key = itemgetter(1), reverse = True) if i[0] not in mods][:10]
-    byhelps = sorted(data, key = itemgetter(2), reverse = True)[:10]
+    imagepath = _make_graph(data)
+    imageurl = _upload_image(imagepath, date)
+    bylambda = [i for i in sorted(scores, key = itemgetter(1), reverse = True) if i[0] not in mods][:10]
+    byhelps = sorted(scores, key = itemgetter(2), reverse = True)[:10]
 
-    content += "\n\n#/r/SmallYTChannel lambda tables: %s" % date
+    subreddit.stylesheet.upload("wikigraph", imagepath)
 
-    content += "\n\n##By lambda:"
+    content += "\n\n##/r/SmallYTChannel lambda tables: %s" % date
+
+    content += "\n\n###By lambda:"
     content += "\n\nUsername|Lambda|Help given\n:--|:--|:--"
     for line in bylambda:
         content += "\n/u/%s|%i|%i" % (line[0], line[1], line[2])
 
-    content += "\n\n##By Help given:"
+    content += "\n\n###By Help given:"
     content += "\n\nUsername|Lambda|Help given\n:--|:--|:--"
     for line in byhelps:
         λ = str(line[1])
@@ -60,7 +94,36 @@ def update_tables():
             λ = "∞"
         content += "\n/u/%s|%s|%i" % (line[0], λ, line[2])
 
+    content += "\n\n##Statistics from %s:\n\n![](%%%%wikigraph%%%%)\n\nTotal λ given|Useful advice given|Unique users\n:--|:--|:--\n%i|%i|%i" % (date, data[-1][1], data[-1][2], data[-1][3])
+    
+    reddit.subreddit("u_SmallYTChannelBot").submit("/r/SmallYTChannel Statistics: %s" % date, url = imageurl).reply(content).mod.distinguish(sticky = True)
+
     subreddit.wiki["lambdatables"].edit(content, reason = "Update: %s" % date)
+    subreddit.wiki[date].edit(content, reason = "Update: %s" % date)
+
+    currentdata = subreddit.wiki["index"].content_md
+    currentdata += "\n\n* [%s](/r/SmallYTChannel/wiki/%s)" % (date, date)
+
+    subreddit.wiki["index"].edit(currentdata, reason = "Update: %s" % date)
+
+def _upload_image(path, date):
+    client = login.IMGUR
+
+    config = {
+		'album': None,
+		'name':  'SmallYTChannelBot Statistics graph: %s' % date,
+		'title': 'SmallYTChannelBot Statistics graph: %s' % date,
+		'description': 'SmallYTChannelBot Statistics graph: %s' % date
+    }
+
+    image = client.upload_from_path(path, config = config)
+
+    return "https://i.imgur.com/%s.png" % image["id"]
+
+def every_day():
+    db.update_stats()
+    _update_tables(db.get_scores(), db.get_stats())
+
 
 def main():
     tail = "\n\n\n ^/u/SmallYTChannelBot ^*made* ^*by* ^/u/jwnskanzkwk. ^*PM* ^*for* ^*bug* ^*reports.* ^*For* ^*more* ^*information,* ^*read* ^*the* ^[FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)"
