@@ -13,8 +13,9 @@ import re
 
 reddit = login.REDDIT
 
-subreddit = reddit.subreddit("SmallYTChannel")
-#subreddit = reddit.subreddit("jwnskanzkwktest")
+#subreddit = reddit.subreddit("SmallYTChannel")
+subreddit = reddit.subreddit("jwnskanzkwktest")
+
 db = Database()
 
 def get_lambda_from_flair(s):
@@ -138,7 +139,7 @@ def main():
                 if not db.id_in_blacklist(comment.id):
                     db.add_to_blacklist(comment.id)
 
-                    if "!mylambda" in comment.body and str(comment.author) != "SmallYTChannelBot":
+                    if "!mylambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
                         author = str(comment.author)
                         λ, links = db.get_lambda(author)
                         if author in get_mods():
@@ -166,18 +167,21 @@ def main():
                         update_users_flair(comment)
 
 
-                    if "!givelambda" in comment.body and str(comment.author) != "SmallYTChannelBot":
+                    if "!givelambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
                         submission = comment.submission
                         parentauthour = str(comment.parent().author)
                         op = str(comment.author)
                         if op == parentauthour:
                             text = "You cannot give yourself λ."
-                        elif op == "SmallYTChannelBot":
+                        elif parentauthour == "SmallYTChannelBot":
                             text = "Please only give lambda to humans."
+                        elif str(comment.author) in get_mods():
+                            text = "The moderator /u/%s has given /u/%s 1λ. /u/%s now has %iλ." % (str(comment.author), parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
+                            db.give_lambda(parentauthour, submission.permalink) 
                         elif op != str(submission.author):
                             text = "Only the OP can give λ."
-                        elif comment.is_root:
-                            text = "You can only give λ to top-level comments."
+                        elif db.user_given_lambda(parentauthour, str(submission.permalink)):
+                            text = "You have already given /u/%s λ for this submission. Why not give λ to another user instead?" % parentauthour
                         else:
                             print("'/u/%s' has given '/u/%s' lambda!" % (op, parentauthour))
                             text = "You have given /u/%s 1λ. /u/%s now has %iλ" % (parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
@@ -203,18 +207,21 @@ def main():
                     if str(submission.author) not in get_mods():
                         score = db.get_lambda(str(submission.author))[0]
                         if submission.link_flair_text in ["Discussion", "Meta", "Collab"]:
-                            text = "Your post is a discussion, meta or collab post so it costs 0λ."
+                            if "youtube.com" in str(submission.url):
+                                text = "Your post has been removed because it has the wrong flair. [Discussion], [Meta] and [Collab] flairs are only for text submissions."
+                                submission.mod.remove()
+                            else:
+                                text = "Your post is a discussion, meta or collab post so it costs 0λ."
                         else:
                             if score < 3:
-                                text = """Thank you for submitting to /r/SmallYTChannel. Please be aware that soon you will need to have at least 3λ to submit here.
-                                You currently have %iλ. /u/%s, please comment `!givelambda` to the most helpful advice you are given. You will be rewarded 1λ if you
-                                do so. For more information, read the [FAQ](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % (score, str(submission.author))
-                                #submission.mod.remove()
+                                text = """Thank you for submitting to /r/SmallYTChannel. Unfortunally, you submission has been removed since you do not have enough λ. You need
+                                3λ to post. You currently have %iλ. For more information, read the [FAQ](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % score
+                                submission.mod.remove()
                             else:
-                                #db.change_lambda(str(submission.author), -3)
                                 text = """Thank you for submitting to /r/SmallYTChannel. You have spent 3λ to submit here, making your current balance %iλ. Soon
                                 you will have to spend your λ to post here.  /u/%s, please comment `!givelambda` to the most helpful advice you are given. You
-                                will be rewarded 1λ if you do so.  For more information, read the [FAQ](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % (score, str(submission.author))
+                                will be rewarded 1λ if you do so.  For more information, read the [FAQ](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % (score - 3, str(submission.author))
+                                db.change_lambda(str(submission.author), -3)
 
                         update_users_flair(submission)
                         reply = submission.reply(text + tail)
