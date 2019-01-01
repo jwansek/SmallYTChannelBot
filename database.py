@@ -87,3 +87,9 @@ class Database:
     def get_stats(self):
         self.cursor.execute("SELECT * FROM stats;")
         return self.cursor.fetchall()
+
+    def user_given_lambda(self, user, permalink):
+        links = self.get_lambda(user)[1]
+        return permalink in links or permalink.replace("https://www.reddit.com", "") in links
+
+        
