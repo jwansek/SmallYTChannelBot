@@ -207,7 +207,7 @@ def main():
                         db.change_lambda(user, -toremove)
                     except Exception as e:
                         print("[ERROR while removing λ] %s" % e)
-                        text = r"An error was encountered. Please use the syntax `!givelambda [user] [how much to remove {integer}] [reason]`"
+                        text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`"
 
                     update_users_flair(comment)
                     reply = comment.reply(text + tail)
