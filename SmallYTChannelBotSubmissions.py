@@ -209,7 +209,7 @@ def main():
                         print("[ERROR while removing λ] %s" % e)
                         text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`"
 
-                    update_users_flair(comment)
+                    update_users_flair(comment.parent())
                     reply = comment.reply(text + tail)
                     reply.mod.distinguish()
 
