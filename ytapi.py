@@ -1,0 +1,90 @@
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+import js2py
+
+ERROR_DICT =  {
+        "title": "ERROR Video deleted?",
+        "description": "ERROR Video deleted?",
+        "channel": "ERROR Video deleted?",
+        "subscribers": "ERROR Video deleted?",
+        "videos": "ERROR Video deleted?",
+        "channelViews": "ERROR Video deleted?",
+        "channelThumb": "ERROR Video deleted?",
+        "thumbnail": "ERROR Video deleted?",
+        "length": "ERROR Video deleted?",
+        "views": "ERROR Video deleted?",
+        "likes": "ERROR Video deleted?",
+        "dislikes": "ERROR Video deleted?",
+        "comments": "ERROR Video deleted?"
+    }
+
+# Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
+# tab of
+#   https://cloud.google.com/console
+# Please ensure that you have enabled the YouTube Data API for your project.
+DEVELOPER_KEY = 'AIzaSyBQsuU5GgCTZdFi7cBmPQHWZwIa545zLUE'
+YOUTUBE_API_SERVICE_NAME = 'youtube'
+YOUTUBE_API_VERSION = 'v3'
+
+#run JavaScript because I don't understand regular expressions so we can copy this bad boy from Stack Overflow
+get_videoId_from_url = js2py.eval_js(r"""function $(url){
+                            var re = /https?:\/\/(?:[0-9A-Z-]+\.)?(?:youtu\.be\/|youtube(?:-nocookie)?\.com\S*?[^\w\s-])([\w-]{11})(?=[^\w-]|$)(?![?=&+%\w.-]*(?:['"][^<>]*>|<\/a>))[?=&+%\w.-]*/ig;
+                            return url.replace(re, '$1');
+                        }""")
+
+def _yt_time_to_norm(time):
+    if time == "ERROR Video deleted?":
+        return time
+
+    time = time.replace("M", ":")[2:].replace("S", "")
+
+    s = time.split(":")
+    if len(s) > 1:
+        if len(s[1]) < 2:
+            time = s[0] + ":" + s[1] + "0"
+
+    return time
+
+#this would be better as a class but I can't be bothered so dictionary it is
+def get_video_data(videoId):
+    youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=DEVELOPER_KEY)
+
+
+    #youTubeData = youtube.videos().list(part = "snippet", id = videoId).execute()["items"][0]["snippet"]
+
+    #return {"title": youTubeData["title"], "description": youTubeData["description"], "tags": youTubeData["tags"]}
+
+    try:
+        youTubeData = youtube.videos().list(part = "snippet,contentDetails,statistics", id = videoId).execute()["items"][0]
+    except IndexError:
+        return ERROR_DICT
+
+    snippet = youTubeData["snippet"]
+    length = youTubeData["contentDetails"]["duration"]
+    stats = youTubeData["statistics"]
+    channelId = snippet["channelId"]
+
+    channelData = youtube.channels().list(part = 'snippet,statistics', id = channelId).execute()["items"][0]
+
+    return {
+        "title": snippet["title"],
+        "description": snippet["description"].replace("\n", "⤶"),
+        "channel": channelData["snippet"]["title"],
+        "subscribers": channelData["statistics"]["subscriberCount"],
+        "videos": channelData["statistics"]["videoCount"],
+        "channelViews": channelData["statistics"]["viewCount"],
+        "channelThumb": channelData["snippet"]["thumbnails"]["high"]["url"],
+        "thumbnail": snippet["thumbnails"]["high"]["url"],
+        "length": _yt_time_to_norm(length),
+        "views": stats["viewCount"],
+        "likes": stats["likeCount"],
+        "dislikes": stats["dislikeCount"],
+        "comments": stats["commentCount"]
+    }
+
+
+if __name__ == '__main__':
+    try:
+        print(get_channel_data("https://www.youtube.com/watch?v=XPpAkggrdaU&feature=youtu.be"))
+    except HttpError as e:
+        print('An HTTP error %d occurred:\n%s' % (e.resp.status, e.content))
