@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from operator import itemgetter
 from database import Database
 import matplotlib
+import ytapi
 import datetime
 import ytapi
 import login
@@ -249,11 +250,12 @@ def main():
                                 will be rewarded 1λ if you do so.  For more information, read the [FAQ](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % (score - 3, str(submission.author))
                                 db.change_lambda(str(submission.author), -3)
 
-                                ytid = ytapi.get_videoId_from_url(submission.url)
-                                if "/" not in ytid:
-                                    ytdata = ytapi.get_video_data(ytid)
+                                try:
+                                    ytid = ytapi.get_videoId_from_url(submission.url)
+                                    if "/" not in ytid:
+                                        ytdata = ytapi.get_video_data(ytid)
 
-                                    text += """
+                                        text += """
 \n\n\n##Video data:
 
 Field|Data
@@ -275,27 +277,29 @@ Thumbnail|[Link](%s)
 Subscribers|%s
 Videos|%s
 Views|%s
-                                    """ % (
-                                        ytdata["title"],
-                                        ytdata["thumbnail"],
-                                        ytdata["views"],
-                                        ytdata["length"],
-                                        ytdata["likes"],
-                                        ytdata["dislikes"],
-                                        ytdata["comments"],
-                                        ytdata["description"],
-                                        ytdata["channel"],
-                                        ytdata["channelThumb"],
-                                        ytdata["subscribers"],
-                                        ytdata["videos"],
-                                        ytdata["channelViews"]
-                                    )
+                                        """ % (
+                                            ytdata["title"],
+                                            ytdata["thumbnail"],
+                                            ytdata["views"],
+                                            ytdata["length"],
+                                            ytdata["likes"],
+                                            ytdata["dislikes"],
+                                            ytdata["comments"],
+                                            ytdata["description"],
+                                            ytdata["channel"],
+                                            ytdata["channelThumb"],
+                                            ytdata["subscribers"],
+                                            ytdata["videos"],
+                                            ytdata["channelViews"]
+                                        )
 
-                                    curflair = submission.link_flair_text
-                                    if str(curflair) != "None":
-                                        submission.mod.flair(" %s | %s | :youtube: %s" % (curflair, ytdata["length"], ytdata["channel"]))
-                                    else:    
-                                        submission.mod.flair("%s | :youtube: %s" % (ytdata["length"], ytdata["channel"]))
+                                        curflair = submission.link_flair_text
+                                        if str(curflair) != "None":
+                                            submission.mod.flair(" %s | %s | :youtube: %s" % (curflair, ytdata["length"], ytdata["channel"]))
+                                        else:    
+                                            submission.mod.flair("%s | :youtube: %s" % (ytdata["length"], ytdata["channel"]))
+                                except:
+                                    pass
 
                         update_users_flair(submission)
                         reply = submission.reply(text + tail)
