@@ -6,6 +6,7 @@ from operator import itemgetter
 from database import Database
 import matplotlib
 import datetime
+import ytapi
 import login
 import time
 import praw
@@ -14,8 +15,8 @@ import os
 
 reddit = login.REDDIT
 
-subreddit = reddit.subreddit("SmallYTChannel")
-#subreddit = reddit.subreddit("jwnskanzkwktest")
+#subreddit = reddit.subreddit("SmallYTChannel")
+subreddit = reddit.subreddit("jwnskanzkwktest")
 
 db = Database()
 
