@@ -33,17 +33,24 @@ get_videoId_from_url = js2py.eval_js(r"""function $(url){
                         }""")
 
 def _yt_time_to_norm(time):
+    origtime = time
     if time == "ERROR Video deleted?":
         return time
 
-    time = time.replace("M", ":")[2:].replace("S", "")
+    time = time[2:].replace("H", ":").replace("M", ":").replace("S", "")
 
-    s = time.split(":")
-    if len(s) > 1:
-        if len(s[1]) < 2:
-            time = s[0] + ":" + s[1] + "0"
+    out = ""
+    for i in time.split(":"):
+        if len(i) == 1:
+            out += "0" + i + ":"
+        elif len(i) == 0:
+            out += "00:"
+        else:
+            out += i + ":"
 
-    return time
+    return out[:-1]
+
+
 
 #this would be better as a class but I can't be bothered so dictionary it is
 def get_video_data(videoId):

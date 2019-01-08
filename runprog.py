@@ -11,13 +11,13 @@ while True:
 
     sleep(60 * 60 * 2)
 
-    #print("closing...")
-    #file = open("pid.txt", "r")
-    #pid = file.readlines()[0]
-    #file.close()
+    print("closing...")
+    file = open("pid.txt", "r")
+    pid = file.readlines()[0]
+    file.close()
 
-    #subprocess.run(["kill", pid])
+    subprocess.run(["kill", pid])
     thread.terminate()
 
-    #print("killed ", pid)
+    print("killed ", pid)
 

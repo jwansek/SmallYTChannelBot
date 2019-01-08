@@ -242,12 +242,12 @@ def main():
                         else:
                             if score < 3:
                                 text = """Thank you for submitting to /r/SmallYTChannel. Unfortunally, you submission has been removed since you do not have enough λ. You need
-                                3λ to post. You currently have %iλ. For more information, read the [FAQ](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % score
+                                3λ to post. You currently have %iλ. For more information, read the [FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % score
                                 submission.mod.remove()
                             else:
                                 text = """Thank you for submitting to /r/SmallYTChannel. You have spent 3λ to submit here, making your current balance %iλ.
                                 /u/%s, please comment `!givelambda` to the most helpful advice you are given. You
-                                will be rewarded 1λ if you do so.  For more information, read the [FAQ](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % (score - 3, str(submission.author))
+                                will be rewarded 1λ if you do so.  For more information, read the [FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % (score - 3, str(submission.author))
                                 db.change_lambda(str(submission.author), -3)
 
                                 try:
@@ -258,7 +258,7 @@ def main():
                                         text += """
 \n\n\n##Video data:
 
-Field|Data
+**Field**|**Data**
 :-|:-
 Title|%s
 Thumbnail|[Link](%s)
@@ -270,7 +270,7 @@ Description|%s
 
 ##Channel Data:
 
-Field|Data
+**Field**|**Data**
 :-|:-
 Name|%s
 Thumbnail|[Link](%s)
@@ -310,9 +310,9 @@ Views|%s
             continue
 
 if __name__ == "__main__":
-    #file = open("pid.txt", "w")
-    #file.write(str(os.getpid()))
-    #file.close()
+    file = open("pid.txt", "w")
+    file.write(str(os.getpid()))
+    file.close()
 
     print("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
     main()
