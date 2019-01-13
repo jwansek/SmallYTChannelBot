@@ -16,8 +16,8 @@ import os
 
 reddit = login.REDDIT
 
-#subreddit = reddit.subreddit("SmallYTChannel")
-subreddit = reddit.subreddit("jwnskanzkwktest")
+subreddit = reddit.subreddit("SmallYTChannel")
+#subreddit = reddit.subreddit("jwnskanzkwktest")
 
 db = Database()
 
@@ -59,7 +59,7 @@ def _make_graph(data):
     date = [datetime.datetime.strptime(i[4], "%Y-%m-%d") for i in data]
 
     fig, ax1 = plt.subplots()
-    ax1.plot(date, lambdaCount, label = "Total λ given", color = "r")
+    ax1.plot(date, lambdaCount, label = "Total λ in circulation", color = "r")
     ax1.set_ylabel("Total λ / help given")
 
     ax1.plot(date, helpGiven, label = "Times help given", color = "g")
@@ -102,7 +102,7 @@ def _update_tables(scores, data):
             λ = "∞"
         content += "\n/u/%s|%s|%i" % (line[0], λ, line[2])
 
-    content += "\n\n##Statistics from %s:\n\n![](%%%%wikigraph%%%%)\n\nTotal λ given|Useful advice given|Unique users\n:--|:--|:--\n%i|%i|%i" % (date, data[-1][1], data[-1][2], data[-1][3])
+    content += "\n\n##Statistics from %s:\n\n![](%%%%wikigraph%%%%)\n\nTotal λ in circulation|Useful advice given|Unique users\n:--|:--|:--\n%i|%i|%i" % (date, data[-1][1], data[-1][2], data[-1][3])
     
     reddit.subreddit("u_SmallYTChannelBot").submit("/r/SmallYTChannel Statistics: %s" % date, url = imageurl).reply(content).mod.distinguish(sticky = True)
 
