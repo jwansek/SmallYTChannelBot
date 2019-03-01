@@ -304,6 +304,7 @@ Views|%s
                         update_users_flair(submission)
                         reply = submission.reply(text + tail)
                         reply.mod.distinguish(sticky = True)
+                        reply.mod.approve()
 
         except Exception as e:
             print("[ERROR]\t%s" % e)

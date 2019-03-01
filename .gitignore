@@ -1,6 +1,8 @@
 login.py
 graph.png
 pid.txt
+ch.py
+chblacklist.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
