@@ -30,7 +30,7 @@ AWS instance that expires in November 2019, you'll need to find a new host
 before then. The backup is probably out of date, so you'll need to write a script
 that parses the subreddit and gets everyone's lambda scores from their flair.
 
-#TODOs
+# TODOs
 
 - Ignore bot commands when they're formatted as code (` or indentation)
 
@@ -38,10 +38,12 @@ that parses the subreddit and gets everyone's lambda scores from their flair.
 
 - Automate backups
 
-#About the database's structure
+# About the database's structure
 
 `users` is where usernames and the scores are kept. `lambdas` is for every
 time a lambda is given. Is linked to `users`. `stats` keeps unique users (just
 the amount of users in `users`), the total lambda in circulation (everyone's
 lambda scores summed), and the times help given, which is just the sum of every
-unique entry in `lambdas`.
+unique entry in `lambdas`. `blacklist` is the reddit id of every comment / 
+submission the bot has dealt with. If running on a new system you'll need to
+update this. You can do this using archive_posts.py
