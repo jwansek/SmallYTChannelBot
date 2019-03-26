@@ -203,25 +203,25 @@ def main():
                         reply = comment.reply(text + tail)
                         reply.mod.distinguish()
 
-                #if comment.body[:11] == "!takelambda" and str(comment.author) in get_mods():
-                #    try:
-                #        splitted = comment.body.split()
-                #        user = splitted[1].replace("/u/", "")
-                #        toremove = int(splitted[2])
-                #        reason = " ".join(splitted[3:])
-                #        
-                #        text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
-                #        db.change_lambda(user, -toremove)
-                #    except Exception as e:
-                #        print("[ERROR while removing λ] %s" % e)
-                #        text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`"
-                #        reply = comment.reply(text + tail)
-                #        reply.mod.distinguish()
-                #        continue
+                    if comment.body[:11] == "!takelambda" and str(comment.author) in get_mods():
+                        try:
+                            splitted = comment.body.split()
+                            user = splitted[1].replace("/u/", "")
+                            toremove = int(splitted[2])
+                            reason = " ".join(splitted[3:])
+                        
+                            text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
+                            db.change_lambda(user, -toremove)
+                        except Exception as e:
+                            print("[ERROR while removing λ] %s" % e)
+                            text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`"
+                            reply = comment.reply(text + tail)
+                            reply.mod.distinguish()
+                            continue
 
-                #    update_users_flair(comment.parent())
-                #    reply = comment.reply(text + tail)
-                #    reply.mod.distinguish()
+                        update_users_flair(comment.parent())
+                        reply = comment.reply(text + tail)
+                        reply.mod.distinguish()
 
       
             for submission in submission_stream:
