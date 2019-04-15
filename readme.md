@@ -32,6 +32,10 @@ that parses the subreddit and gets everyone's lambda scores from their flair.
 
 # TODOs
 
+- Automatically flair when [] is in submission title
+
+- Implement !recheck command to recheck already removed submissions
+
 - Ignore bot commands when they're formatted as code (` or indentation)
 
 - Write a bot for the discord
