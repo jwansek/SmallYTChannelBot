@@ -1,4 +1,5 @@
 from mpl_toolkits.axes_grid1 import host_subplot
+from misc_classes import SimpleLogger
 import mpl_toolkits.axisartist as AA
 from imgurpython import ImgurClient
 import matplotlib.pyplot as plt
@@ -21,10 +22,16 @@ subreddit = reddit.subreddit("SmallYTChannel")
 #subreddit = reddit.subreddit("jwnskanzkwktest")
 
 db = Database()
+simplelogger = SimpleLogger()
 
 def get_time():
     #this is not the correct way to do this but I don't care
     return str(datetime.datetime.now())[:-7]
+
+def display(message):
+    message = "%d\t[%s]\t%s" % (os.getpid(), get_time(), message)
+    print(message)
+    simplelogger.log(message)
 
 def get_lambda_from_flair(s):
     result = re.search("\[(.*)\]", s)
@@ -130,6 +137,7 @@ def _upload_image(path, date):
     return "https://i.imgur.com/%s.png" % image["id"]
 
 def every_day():
+    display("Updated statistics")
     db.update_stats()
     _update_tables(db.get_scores(), db.get_stats())
 
@@ -185,20 +193,18 @@ def main():
                         elif str(comment.author) in get_mods():
                             text = "The moderator /u/%s has given /u/%s 1λ. /u/%s now has %iλ." % (str(comment.author), parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
                             db.give_lambda(parentauthour, submission.permalink) 
-                            logging.info("[%s] %s" % (get_time(), text))
+                            display(text)
                         elif op != str(submission.author):
                             text = "Only the OP can give λ."
                         elif db.user_given_lambda(parentauthour, str(submission.permalink)):
                             text = "You have already given /u/%s λ for this submission. Why not give λ to another user instead?" % parentauthour
                         else:
-                            print("[%s] '/u/%s' has given '/u/%s' lambda!" % (get_time(), op, parentauthour))
-                            logging.info("[%s] '/u/%s' has given '/u/%s' lambda!" % (get_time(), op, parentauthour))
+                            display("'/u/%s' has given '/u/%s' lambda!" % (op, parentauthour))
                             text = "You have given /u/%s 1λ. /u/%s now has %iλ" % (parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
                            
                             if not db.link_in_db(submission.permalink) or not db.link_in_db(submission.permalink.replace("https://www.reddit.com", "")):
                                 db.give_lambda(parentauthour, submission.permalink, op)
-                                print("The OP has received lambda too!")
-                                logging.info("The OP has received lambda too!")
+                                display("The OP received lambda too!")
                             else:
                                 db.give_lambda(parentauthour, submission.permalink)
                         
@@ -216,11 +222,9 @@ def main():
                         
                             text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
                             db.change_lambda(user, -toremove)
-                            print("[%s] A moderator removed %i lambda from /u/%s for the reason '%s'" % (get_time(), toremove,  user, reason))
-                            logging.info("[%s] A moderator removed %i lambda from /u/%s for the reason '%s'" % (get_time(), toremove,  user, reason))
+                            dispay("A moderator removed %i lambda from /u/%s for the reason '%s'" % (toremove,  user, reason))
                         except Exception as e:
-                            print("[ERROR while removing λ] %s" % e)
-                            logging.error("[ERROR while removing λ] %s" % e)
+                            display("{ERROR while removing λ} %s" % e)
                             text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`"
                             reply = comment.reply(text + tail)
                             reply.mod.distinguish()
@@ -236,8 +240,7 @@ def main():
                     break
                 if not db.id_in_blacklist(submission.id):
                     db.add_to_blacklist(submission.id)                         
-                    print("[%s] There has been a new submission: '%s', with flair '%s'" % (get_time(), submission.title, submission.link_flair_text))
-                    logging.info("[%s] There has been a new submission: '%s', with flair '%s'" % (get_time(), submission.title, submission.link_flair_text))
+                    display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text))
 
                     if str(submission.author) not in get_mods():
                         score = db.get_lambda(str(submission.author))[0]
@@ -245,6 +248,7 @@ def main():
                             if "youtube.com" in str(submission.url) or "youtu.be" in str(submission.url):
                                 text = "Your post has been removed because it has the wrong flair. [Discussion], [Meta] and [Collab] flairs are only for text submissions."
                                 submission.mod.remove()
+                                display("/u/%s had their submission removed for using the wrong flair." % submission.author)
                             else:
                                 text = "Your post is a discussion, meta or collab post so it costs 0λ."
                         else:
@@ -252,6 +256,7 @@ def main():
                                 text = """Thank you for submitting to /r/SmallYTChannel. Unfortunally, you submission has been removed since you do not have enough λ. You need
                                 3λ to post. You currently have %iλ. For more information, read the [FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % score
                                 submission.mod.remove()
+                                display("/u/%s had their submission removed for insufficient lambda." % submission.author)
                             else:
                                 text = """Thank you for submitting to /r/SmallYTChannel. You have spent 3λ to submit here, making your current balance %iλ.
                                 /u/%s, please comment `!givelambda` to the most helpful advice you are given. You
@@ -315,8 +320,7 @@ Views|%s
                         reply.mod.approve()
 
         except Exception as e:
-            print("[ERROR]\t%s" % e)
-            logging.error("[%s] %s" % (get_time(), e))
+            display("{ERROR} %s" % e)
             continue
 
 if __name__ == "__main__":
@@ -324,9 +328,8 @@ if __name__ == "__main__":
     file.write(str(os.getpid()))
     file.close()
 
-    logging.basicConfig(filename = "smallYTLog.log", format = "%(process)d\t%(message)s", level = logging.DEBUG)
+    logging.basicConfig(filename = "api.log", format = "%(process)d\t%(message)s", level = logging.DEBUG)
 
-    print("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
-    logging.info("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
+    display("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
     main()
 

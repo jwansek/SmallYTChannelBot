@@ -3,7 +3,6 @@ graph.png
 pid.txt
 ch.py
 chblacklist.txt
-smallYTLog.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
