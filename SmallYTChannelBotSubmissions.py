@@ -7,6 +7,7 @@ from database import Database
 import matplotlib
 import ytapi
 import datetime
+import logging
 import ytapi
 import login
 import time
@@ -23,7 +24,7 @@ db = Database()
 
 def get_time():
     #this is not the correct way to do this but I don't care
-    return str(datetime.datetime.now().time())[:8]
+    return str(datetime.datetime.now())[:-7]
 
 def get_lambda_from_flair(s):
     result = re.search("\[(.*)\]", s)
@@ -184,17 +185,20 @@ def main():
                         elif str(comment.author) in get_mods():
                             text = "The moderator /u/%s has given /u/%s 1λ. /u/%s now has %iλ." % (str(comment.author), parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
                             db.give_lambda(parentauthour, submission.permalink) 
+                            logging.info("[%s] %s" % (get_time(), text))
                         elif op != str(submission.author):
                             text = "Only the OP can give λ."
                         elif db.user_given_lambda(parentauthour, str(submission.permalink)):
                             text = "You have already given /u/%s λ for this submission. Why not give λ to another user instead?" % parentauthour
                         else:
                             print("[%s] '/u/%s' has given '/u/%s' lambda!" % (get_time(), op, parentauthour))
+                            logging.info("[%s] '/u/%s' has given '/u/%s' lambda!" % (get_time(), op, parentauthour))
                             text = "You have given /u/%s 1λ. /u/%s now has %iλ" % (parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
                            
                             if not db.link_in_db(submission.permalink) or not db.link_in_db(submission.permalink.replace("https://www.reddit.com", "")):
                                 db.give_lambda(parentauthour, submission.permalink, op)
                                 print("The OP has received lambda too!")
+                                logging.info("The OP has received lambda too!")
                             else:
                                 db.give_lambda(parentauthour, submission.permalink)
                         
@@ -212,8 +216,11 @@ def main():
                         
                             text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
                             db.change_lambda(user, -toremove)
+                            print("[%s] A moderator removed %i lambda from /u/%s for the reason '%s'" % (get_time(), toremove,  user, reason))
+                            logging.info("[%s] A moderator removed %i lambda from /u/%s for the reason '%s'" % (get_time(), toremove,  user, reason))
                         except Exception as e:
                             print("[ERROR while removing λ] %s" % e)
+                            logging.error("[ERROR while removing λ] %s" % e)
                             text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`"
                             reply = comment.reply(text + tail)
                             reply.mod.distinguish()
@@ -230,6 +237,7 @@ def main():
                 if not db.id_in_blacklist(submission.id):
                     db.add_to_blacklist(submission.id)                         
                     print("[%s] There has been a new submission: '%s', with flair '%s'" % (get_time(), submission.title, submission.link_flair_text))
+                    logging.info("[%s] There has been a new submission: '%s', with flair '%s'" % (get_time(), submission.title, submission.link_flair_text))
 
                     if str(submission.author) not in get_mods():
                         score = db.get_lambda(str(submission.author))[0]
@@ -308,6 +316,7 @@ Views|%s
 
         except Exception as e:
             print("[ERROR]\t%s" % e)
+            logging.error("[%s] %s" % (get_time(), e))
             continue
 
 if __name__ == "__main__":
@@ -315,6 +324,9 @@ if __name__ == "__main__":
     file.write(str(os.getpid()))
     file.close()
 
+    logging.basicConfig(filename = "smallYTLog.log", format = "%(process)d\t%(message)s", level = logging.DEBUG)
+
     print("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
+    logging.info("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
     main()
 
