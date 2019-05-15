@@ -328,7 +328,7 @@ if __name__ == "__main__":
     file.write(str(os.getpid()))
     file.close()
 
-    logging.basicConfig(filename = "api.log", format = "%(process)d\t%(message)s", level = logging.DEBUG)
+    logging.basicConfig(filename = "api.log", format = "[%(asctime)s] %(process)d\t%(message)s", level = logging.DEBUG)
 
     display("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
     main()
