@@ -110,7 +110,9 @@ def _update_tables(scores, data):
             λ = "∞"
         content += "\n/u/%s|%s|%i" % (line[0], λ, line[2])
 
-    content += "\n\n##Statistics from %s:\n\n![](%%%%wikigraph%%%%)\n\nTotal λ in circulation|Useful advice given|Unique users\n:--|:--|:--\n%i|%i|%i" % (date, data[-1][1], data[-1][2], data[-1][3])
+    content += "\n\n##Statistics from %s:\n\nIf you're looking at this through the wiki, not through the bot's profile, then" % (date)
+    content += "the most up-to-date graph will be shown below. To see the graph at this date, follow [this link.](%s)" % (imageurl)
+    content += "\n\n![](%%%%wikigraph%%%%)\n\nTotal λ in circulation|Useful advice given|Unique users\n:--|:--|:--\n%i|%i|%i" % (data[-1][1], data[-1][2], data[-1][3])
     
     reddit.subreddit("u_SmallYTChannelBot").submit("/r/SmallYTChannel Statistics: %s" % date, url = imageurl).reply(content).mod.distinguish(sticky = True)
 
