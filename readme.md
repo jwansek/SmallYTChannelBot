@@ -25,11 +25,6 @@ and do the flair.
 API keys for imgur. The YT api key is in ytapi.py for some reason. Hope that
 isn't a massive problem.
 
-If you're looking at this because you think I'm dead, the bot is running on an
-AWS instance that expires in November 2019, you'll need to find a new host
-before then. The backup is probably out of date, so you'll need to write a script
-that parses the subreddit and gets everyone's lambda scores from their flair.
-
 # TODOs
 
 - Automatically flair when [] is in submission title
@@ -39,8 +34,6 @@ that parses the subreddit and gets everyone's lambda scores from their flair.
 - Ignore bot commands when they're formatted as code (` or indentation)
 
 - Write a bot for the discord
-
-- Automate backups
 
 # About the database's structure
 
