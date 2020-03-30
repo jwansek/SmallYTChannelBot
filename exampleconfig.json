@@ -1,0 +1,27 @@
+{
+    "redditapi":
+    {
+        "client_id": "xxxxxxxxxxxxx",
+        "client_secret": "xxxxxxxxxxxxxxxxxxxxxxxx",
+        "user_agent": "xxxxxxxxxxxxxxx",
+        "username": "xxxxxxxxxxxxxxx",
+        "password": "xxxxxxxxxxxxxxxxxxxx"
+    },
+    "imgurapi":
+    {
+        "client_id": "xxxxxxxxxxxxxxxxx",
+        "client_secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    "youtubeapi":
+    {
+        "developer_key": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    "subreddit": "jwnskanzkwktest",
+    "comment_tail": "\n\n\n ^/u/SmallYTChannelBot ^*made* ^*by* ^/u/jwnskanzkwk. ^*PM* ^*for* ^*bug* ^*reports.* ^*For* ^*more* ^*information,* ^*read* ^*the* ^[FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)",
+    "free_flairs":
+    [
+        "Discussion",
+        "Meta", 
+        "Collab"
+    ]
+}

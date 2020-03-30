@@ -1,6 +1,10 @@
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import json
 import js2py
+
+with open("config.json", "r") as f:
+    CONFIG = json.load(f)
 
 ERROR_DICT =  {
         "title": "ERROR Video deleted?",
@@ -22,7 +26,7 @@ ERROR_DICT =  {
 # tab of
 #   https://cloud.google.com/console
 # Please ensure that you have enabled the YouTube Data API for your project.
-DEVELOPER_KEY = 'AIzaSyBQsuU5GgCTZdFi7cBmPQHWZwIa545zLUE'
+DEVELOPER_KEY = CONFIG["youtubeapi"]["developer_key"]
 YOUTUBE_API_SERVICE_NAME = 'youtube'
 YOUTUBE_API_VERSION = 'v3'
 
@@ -92,6 +96,6 @@ def get_video_data(videoId):
 
 if __name__ == '__main__':
     try:
-        print(get_channel_data("https://www.youtube.com/watch?v=XPpAkggrdaU&feature=youtu.be"))
+        print(get_video_data(get_videoId_from_url("https://www.youtube.com/watch?v=ZYqG31V4qtA")))
     except HttpError as e:
         print('An HTTP error %d occurred:\n%s' % (e.resp.status, e.content))

@@ -3,7 +3,7 @@ import subprocess
 import multiprocessing
 
 def thread_():
-    subprocess.run(["python3", "SmallYTChannelBotSubmissions.py"])
+    subprocess.run(["python3", "subreddit.py"])
 
 while True:
     thread = multiprocessing.Process(target = thread_, args = ())

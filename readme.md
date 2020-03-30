@@ -1,39 +1,34 @@
 # /u/SmallYTChannelBot Source Code
 
-- SmallYTChannelBotSubmissions.py is where the main code is kept. It has the
-main subreddit stream in it.
-
-- SmallYTChannelDatabase.db is an SQLite file containing the database. I chose
-SQLite over MySQL since it's easier to backup. Maybe one day we'll upgrade to
-MySQL and do automated backups.
-
-- database.py is a class for interfacing with the database.
-
-- onceaday.py is a file which calls a function in the main prog every 24h
-to do statistcs stuff, drawing the graphs etc.
-
-- runprog.py calls the main program. The way it does this is kinda alkward,
-because it kills the main program and restarts it every 2h. I don't even know
-if this is needed anymore but it fixed problems so it stays. It works because
-the main prog writes its pid in a text file every time it's called. This pid
-is called after 2h and a new instance is started.
-
-- ytapi.py gets data about user's videos in the subreddit to do the stats comment
-and do the flair.
-
-- Not included for security reasons is login.py which has the PRAW instance and
-API keys for imgur. The YT api key is in ytapi.py for some reason. Hope that
-isn't a massive problem.
+The source code for /u/SmallYTChannelBot. Currently refactoring is in progress.
 
 # TODOs
 
-- Automatically flair when [] is in submission title
+- [x] Automatically flair when [] is in submission title (done with AutoModerator)
 
-- Implement !recheck command to recheck already removed submissions
+- [ ] Implement `!recheck` command to recheck already removed submissions
 
-- Ignore bot commands when they're formatted as code (` or indentation)
+- [ ] Ignore bot commands when they're formatted as code (` ` or indentation)
 
-- Write a bot for the discord
+- [ ] Write a bot for the discord
+
+- [ ] Implement a stream for edited comments
+
+- [x] Removed giving lambda in free posts
+
+- [x] Removed lambda for giving lambda
+
+- [x] Switched to using a JSON file for configuration, included template
+
+- [x] Refactored main code
+
+- [x] Changed license from MIT to GPLv3
+
+- [ ] Update flair when using the !takelambda command
+
+- [x] Reimplented the `!takelambda` command
+
+- [ ] Change `!takelambda` to `!refundlambda` when negative
 
 # About the database's structure
 

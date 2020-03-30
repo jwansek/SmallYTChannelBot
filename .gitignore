@@ -4,6 +4,7 @@ pid.txt
 ch.py
 chblacklist.txt
 api.log
+config.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
