@@ -46,10 +46,10 @@ def update_users_flair_from_comment(comment):
 
 def update_users_flair(username):
     flairtext = next(SUBREDDIT.flair(redditor=username))["flair_text"]
-    flairscore = get_lambda_from_flair(flairtext)
     if flairtext is None:
         flairtext = ""
     else:
+        flairscore = get_lambda_from_flair(flairtext)
         flairtext = str(flairtext.replace("[%s] " % flairscore, ""))
     if username in get_mods():
         newflair = "[∞λ] %s" % (flairtext)
@@ -280,7 +280,7 @@ Views|%s
             except:
                 pass
 
-    update_users_flair_from_comment(submission)
+    update_users_flair(str(submission.author))
     return text
 
 def main():
