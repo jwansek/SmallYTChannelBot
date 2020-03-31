@@ -40,10 +40,13 @@ def get_lambda_from_flair(s):
     else:
         return ""
 
-def update_users_flair(comment):
-    username = str(comment.author)
-    flairscore = get_lambda_from_flair(str(comment.author_flair_text))
-    flairtext = comment.author_flair_text
+def update_users_flair_from_comment(comment):
+    #implemented only for legacy
+    update_users_flair(str(comment.author))
+
+def update_users_flair(username):
+    flairtext = next(SUBREDDIT.flair(redditor=username))["flair_text"]
+    flairscore = get_lambda_from_flair(flairtext)
     if flairtext is None:
         flairtext = ""
     else:
@@ -135,7 +138,7 @@ def handle_mylambda(comment):
                 text += "\n\n[%i more...]" % len(links) - count
                 break
 
-    update_users_flair(comment)
+    update_users_flair_from_comment(comment)
     return text
 
 def handle_givelambda(comment):
@@ -167,9 +170,8 @@ def handle_givelambda(comment):
         # else:
         db.give_lambda(parentauthour, submission.permalink)
     
-    update_users_flair(comment)
-    #updating the parent comment is now unnessicary since bonus lambda was removed
-    # update_users_flair(comment.parent())
+    # update_users_flair_from_comment(comment)
+    update_users_flair_from_comment(comment.parent())
     return text
 
 def handle_takelambda(comment):
@@ -186,7 +188,24 @@ def handle_takelambda(comment):
         display("{ERROR while removing λ} %s" % e)
         text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
 
-    update_users_flair(comment.parent())
+    update_users_flair(user)
+    return text
+
+def handle_refundlambda(comment):
+    try:
+        splitted = comment.body.split()
+        user = splitted[1].replace("/u/", "")
+        toadd = int(splitted[2].replace("\\", ""))
+        reason = " ".join(splitted[3:])
+    
+        text = "/u/%s has had %iλ refunded for the reason '%s'. /u/%s now has %iλ" % (user, toadd, reason, user, db.get_lambda(user)[0] + toadd)
+        db.change_lambda(user, toadd)
+        display("A moderator refunded %i lambda from /u/%s for the reason '%s'" % (toadd,  user, reason))
+    except Exception as e:
+        display("{ERROR while refunding λ} %s" % e)
+        text = r"An error was encountered. Please use the syntax `!refundlambda [user] [how much to add {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
+
+    update_users_flair(user)
     return text
 
 def handle_submission(submission):
@@ -261,7 +280,7 @@ Views|%s
             except:
                 pass
 
-    update_users_flair(submission)
+    update_users_flair_from_comment(submission)
     return text
 
 def main():
@@ -269,44 +288,47 @@ def main():
     submission_stream = SUBREDDIT.stream.submissions(pause_after=-1)
 
     while True:
-        # try:
-        for comment in comment_stream:
-            if comment is None:
-                break
-            if not db.id_in_blacklist(comment.id):
-                db.add_to_blacklist(comment.id)
+        try:
+            for comment in comment_stream:
+                if comment is None:
+                    break
+                if not db.id_in_blacklist(comment.id):
+                    db.add_to_blacklist(comment.id)
 
-                response = None
-                if "!mylambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
-                    response = handle_mylambda(comment)
+                    response = None
+                    if "!mylambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
+                        response = handle_mylambda(comment)
 
-                if "!givelambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
-                    response = handle_givelambda(comment)        
+                    if "!givelambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
+                        response = handle_givelambda(comment)        
 
-                if comment.body[:11] == "!takelambda" and str(comment.author) in get_mods():
-                    response = handle_takelambda(comment)
+                    if comment.body.startswith("!takelambda") and str(comment.author) in get_mods():
+                        response = handle_takelambda(comment)
 
-                if response is not None:
-                    reply = comment.reply(response + COMMENT_TAIL)
-                    reply.mod.distinguish(sticky = False)
+                    if comment.body.startswith("!refundlambda") and str(comment.author) in get_mods():
+                        response = handle_refundlambda(comment)
 
-        for submission in submission_stream:
-            if submission is None:
-                break
-            if not db.id_in_blacklist(submission.id):
-                db.add_to_blacklist(submission.id)                         
-                display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text))
+                    if response is not None:
+                        reply = comment.reply(response + COMMENT_TAIL)
+                        reply.mod.distinguish(sticky = False)
 
-                response = None
-                if str(submission.author) not in get_mods():
-                    response = handle_submission(submission)
-                    reply = submission.reply(response + COMMENT_TAIL)
-                    reply.mod.distinguish(sticky = True)
-                    reply.mod.approve()
+            for submission in submission_stream:
+                if submission is None:
+                    break
+                if not db.id_in_blacklist(submission.id):
+                    db.add_to_blacklist(submission.id)                         
+                    display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text))
 
-        # except Exception as e:
-        #     display("{ERROR} %s" % e)
-        #     continue
+                    response = None
+                    if str(submission.author) not in get_mods():
+                        response = handle_submission(submission)
+                        reply = submission.reply(response + COMMENT_TAIL)
+                        reply.mod.distinguish(sticky = True)
+                        reply.mod.approve()
+
+        except Exception as e:
+            display("{ERROR} %s" % e)
+            continue
 
 if __name__ == "__main__":
     file = open("pid.txt", "w")

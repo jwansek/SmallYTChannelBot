@@ -24,11 +24,11 @@ The source code for /u/SmallYTChannelBot. Currently refactoring is in progress.
 
 - [x] Changed license from MIT to GPLv3
 
-- [ ] Update flair when using the !takelambda command
+- [x] Update flair when using the !takelambda command
 
 - [x] Reimplented the `!takelambda` command
 
-- [ ] Change `!takelambda` to `!refundlambda` when negative
+- [x] Change `!takelambda` to `!refundlambda` when negative
 
 # About the database's structure
 
