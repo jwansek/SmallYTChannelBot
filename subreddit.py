@@ -1,8 +1,8 @@
-from misc_classes import SimpleLogger
 from imgurpython import ImgurClient
 from operator import itemgetter
 from database import Database
 import datetime
+import logging
 import ytapi
 import graph
 import time
@@ -22,16 +22,21 @@ FREE_FLAIRS = CONFIG["free_flairs"]
 IMGUR = ImgurClient(**CONFIG["imgurapi"])
 
 db = Database()
-simplelogger = SimpleLogger()
+
+logging.basicConfig( 
+    format = "[%(asctime)s] %(message)s", 
+    level = logging.INFO,
+    handlers=[
+        logging.FileHandler("actions.log"),
+        logging.StreamHandler()
+    ])
 
 def get_time():
     #this is not the correct way to do this but I don't care
     return time.strftime("%b %d %Y %H:%M:%S", time.gmtime())
 
 def display(message):
-    message = "%d\t[%s]\t%s" % (os.getpid(), get_time(), message)
-    print(message)
-    simplelogger.log(message)
+    logging.info(message)
 
 def get_lambda_from_flair(s):
     result = re.search("\[(.*)\]", s)
@@ -44,6 +49,18 @@ def update_users_flair_from_comment(comment):
     #implemented only for legacy
     update_users_flair(str(comment.author))
 
+def get_medal(actualscore):
+    if actualscore >= 10 and actualscore < 25:
+        return "🥉 Bronze "
+    elif actualscore >= 25 and actualscore < 50:
+        return "🥈 Silver "
+    elif actualscore >= 50 and actualscore < 100:
+        return "🥇 Gold "
+    elif actualscore > 100:
+        return "🏆 Platinum "
+    else:
+        return ""
+
 def update_users_flair(username):
     flairtext = next(SUBREDDIT.flair(redditor=username))["flair_text"]
     if flairtext is None:
@@ -52,10 +69,12 @@ def update_users_flair(username):
         flairscore = get_lambda_from_flair(flairtext)
         flairtext = str(flairtext.replace("[%s] " % flairscore, ""))
     if username in get_mods():
-        newflair = "[∞λ] %s" % (flairtext)
+        newflair = "[🏆 ∞λ] %s" % (flairtext)
     else:
         actualscore = db.get_lambda(username)[0]
-        newflair = "[%iλ] %s" % (actualscore, flairtext)
+        newflair = "[%s%iλ] %s" % (get_medal(actualscore), actualscore, flairtext)
+
+    logging.info("/u/%s had their flair updated" % username)
     SUBREDDIT.flair.set(redditor = username, text = newflair)
 
 def get_mods():
