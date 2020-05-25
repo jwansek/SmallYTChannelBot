@@ -92,4 +92,10 @@ class Database:
         links = self.get_lambda(user)[1]
         return permalink in links or permalink.replace("https://www.reddit.com", "") in links
 
-        
+    def get_all_lambdas(self):
+        self.cursor.execute("SELECT lambdas.lambdaID, lambdas.permalink, users.user_name, lambdas.created FROM lambdas INNER JOIN users ON lambdas.userID = users.userID;")
+        return self.cursor.fetchall()
+
+    def add_date_to_permalink(self, permalink, date):
+        self.cursor.execute("UPDATE lambdas SET created = ? WHERE permalink = ?;", (date, permalink))
+        self.connection.commit()

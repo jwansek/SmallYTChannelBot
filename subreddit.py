@@ -349,6 +349,36 @@ def main():
             display("{ERROR} %s" % e)
             continue
 
+def get_submission_times(permalink):
+    if not permalink.startswith("https://www.reddit.com"):
+        permalink = "https://www.reddit.com" + permalink
+
+    submission = REDDIT.submission(url = permalink)
+    return submission.created_utc
+
+def add_times_to_lambdas():
+    updated_permalinks = []
+    for id_, permalink, user, created in db.get_all_lambdas():
+        if created is None and permalink not in updated_permalinks:
+            db.add_date_to_permalink(permalink, get_submission_times(permalink))
+            updated_permalinks.append(permalink)
+            logging.info("Added date for permalink %s" % permalink)
+
+
+def get_monthly_leaderboard():
+    add_times_to_lambdas()
+    all_lambdas = db.get_all_lambdas()
+    thresh = time.time() - 30 * 24 * 60 * 60
+    ordered_leaderboard = []
+    for id_, permalink, user, created in all_lambdas:
+        if created is not None:
+            if created > thresh:
+                print(user, permalink)
+            else:
+                print(permalink, " is too old")
+
+        
+
 if __name__ == "__main__":
     file = open("pid.txt", "w")
     file.write(str(os.getpid()))
