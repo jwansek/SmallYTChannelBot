@@ -170,7 +170,7 @@ def handle_givelambda(comment):
         text = "Please only give lambda to humans."
     elif str(comment.author) in get_mods():
         text = "The moderator /u/%s has given /u/%s 1λ. /u/%s now has %iλ." % (str(comment.author), parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
-        db.give_lambda(parentauthour, submission.permalink) 
+        db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc)) 
         display(text)
     elif submission.link_flair_text in FREE_FLAIRS:
         text = "You cannot give lambda in free posts anymore."
@@ -187,7 +187,7 @@ def handle_givelambda(comment):
         #     db.give_lambda(parentauthour, submission.permalink, op)
         #     display("The OP received lambda too!")
         # else:
-        db.give_lambda(parentauthour, submission.permalink)
+        db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc))
     
     # update_users_flair_from_comment(comment)
     update_users_flair_from_comment(comment.parent())

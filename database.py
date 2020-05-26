@@ -10,7 +10,7 @@ class Database:
         self.cursor.execute("UPDATE users SET lambda = ((SELECT lambda FROM users WHERE user_name = ?) + ?) WHERE user_name = ?;", (user, changeby, user))
         self.connection.commit()
 
-    def give_lambda(self, user, link, op = None):
+    def give_lambda(self, user, link, timestamp = None, op = None):
         def give(user, link = None):
             #check if the user has an entry in the database
             self.cursor.execute("SELECT userID FROM users WHERE user_name = ?;", (user, ))
@@ -21,12 +21,12 @@ class Database:
                 self.cursor.execute("INSERT INTO users (user_name, lambda) VALUES (?, 1);", (user, ))
                 self.connection.commit()
                 if link is not None:
-                    self.cursor.execute("INSERT INTO lambdas (userID, permalink) VALUES ((SELECT userID FROM users WHERE user_name = ?), ?);", (user, link))
+                    self.cursor.execute("INSERT INTO lambdas (userID, permalink, created) VALUES ((SELECT userID FROM users WHERE user_name = ?), ?, ?);", (user, link, timestamp))
             else:
                 #update their lambda and add to lambdas
                 self.change_lambda(user, 1)
                 if link is not None:
-                    self.cursor.execute("INSERT INTO lambdas (userID, permalink) VALUES (?, ?);", (id_, link))
+                    self.cursor.execute("INSERT INTO lambdas (userID, permalink, created) VALUES (?, ?, ?);", (id_, link, timestamp))
         
             self.connection.commit()
 
