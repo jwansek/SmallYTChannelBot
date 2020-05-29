@@ -99,3 +99,16 @@ class Database:
     def add_date_to_permalink(self, permalink, date):
         self.cursor.execute("UPDATE lambdas SET created = ? WHERE permalink = ?;", (date, permalink))
         self.connection.commit()
+
+    def get_lambda_leaderboard(self):
+        self.cursor.execute("""
+        SELECT users.user_name, COUNT(lambdas.userID) AS times_helped, users.lambda 
+        FROM lambdas INNER JOIN users ON users.userID = lambdas.userID 
+        WHERE created > (strftime('%s','now') - (60 * 60 * 24 * 30)) 
+        GROUP BY lambdas.userID ORDER BY times_helped DESC LIMIT 10;
+        """)
+        return self.cursor.fetchall()
+
+if __name__ == "__main__":
+    import subreddit
+    print(subreddit.every_day())

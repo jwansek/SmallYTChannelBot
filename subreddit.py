@@ -133,9 +133,24 @@ def upload_image(path, date):
     return "https://i.imgur.com/%s.png" % image["id"]
 
 def every_day():
-    display("Updated statistics")
+    display("Starting every day program...")
+    display("Updating database statistics...")
     db.update_stats()
+    display("Posting and updating wiki...")
     update_tables(db.get_scores(), db.get_stats())
+    display("Formatting leaderboard...")
+    leaderboard = format_monthly_leaderboard()
+    display("Updating sidebar...")
+    #it'd be cool to find a way to access this directly without iteration
+    for widget in SUBREDDIT.widgets.sidebar:
+        if widget.shortName == "Monthly Lambda Leaderboard":
+            widget.mod.update(text = leaderboard)
+            display("Updated in new reddit...")
+    sidebar = SUBREDDIT.mod.settings()["description"]
+    oldtable = sidebar.split("------")[-1]
+    SUBREDDIT.mod.update(description = sidebar.replace(oldtable, "\n\n## Monthly Lambda Leaderboard\n\n" + leaderboard))
+    display("Updated in old reddit...")
+    display("Completed.")
 
 def handle_mylambda(comment):
     author = str(comment.author)
@@ -365,17 +380,12 @@ def add_times_to_lambdas():
             logging.info("Added date for permalink %s" % permalink)
 
 
-def get_monthly_leaderboard():
-    add_times_to_lambdas()
-    all_lambdas = db.get_all_lambdas()
-    thresh = time.time() - 30 * 24 * 60 * 60
-    ordered_leaderboard = []
-    for id_, permalink, user, created in all_lambdas:
-        if created is not None:
-            if created > thresh:
-                print(user, permalink)
-            else:
-                print(permalink, " is too old")
+def format_monthly_leaderboard():
+    leaderboard = db.get_lambda_leaderboard()
+    out = "**Username**|**Medal**|**Times Helped**|**Lambda**\n:-|:-|:-|:-\n"
+    for username, times_helped, λ in leaderboard:
+        out += "/u/%s|%1s|%s|%sλ\n" % (username, get_medal(λ)[:-1], times_helped, λ)
+    return out + "\nLast updated: %s" % get_time()
 
         
 
@@ -383,8 +393,6 @@ if __name__ == "__main__":
     file = open("pid.txt", "w")
     file.write(str(os.getpid()))
     file.close()
-
-    # logging.basicConfig(filename = "api.log", format = "[%(asctime)s] %(process)d\t%(message)s", level = logging.DEBUG)
 
     display("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
     main()
