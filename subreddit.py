@@ -211,7 +211,7 @@ def handle_givelambda(comment):
 def handle_takelambda(comment):
     try:
         splitted = comment.body.split()
-        user = splitted[1].replace("/u/", "")
+        user = splitted[1].replace("/u/", "").replace("u/", "")
         toremove = int(splitted[2].replace("\\", ""))
         reason = " ".join(splitted[3:])
     
@@ -228,7 +228,7 @@ def handle_takelambda(comment):
 def handle_refundlambda(comment):
     try:
         splitted = comment.body.split()
-        user = splitted[1].replace("/u/", "")
+        user = splitted[1].replace("/u/", "").replace("u/", "")
         toadd = int(splitted[2].replace("\\", ""))
         reason = " ".join(splitted[3:])
     
