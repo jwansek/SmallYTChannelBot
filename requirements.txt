@@ -3,3 +3,5 @@ google_api_python_client
 imgurpython
 js2py
 praw
+sqlite3-to-mysql
+pymysql

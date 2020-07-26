@@ -21,8 +21,6 @@ FREE_FLAIRS = CONFIG["free_flairs"]
 
 IMGUR = ImgurClient(**CONFIG["imgurapi"])
 
-db = Database()
-
 logging.basicConfig( 
     format = "[%(asctime)s] %(message)s", 
     level = logging.INFO,
@@ -381,18 +379,19 @@ def add_times_to_lambdas():
 
 
 def format_monthly_leaderboard():
-    leaderboard = db.get_lambda_leaderboard()
-    out = "**Username**|**Medal**|**Times Helped**|**Lambda**\n:-|:-|:-|:-\n"
-    for username, times_helped, λ in leaderboard:
-        out += "/u/%s|%1s|%s|%sλ\n" % (username, get_medal(λ)[:-1], times_helped, λ)
-    return out + "\nLast updated: %s" % get_time()
+    with Database() as db:
+        leaderboard = db.get_lambda_leaderboard()
+        out = "**Username**|**Medal**|**Times Helped**|**Lambda**\n:-|:-|:-|:-\n"
+        for username, times_helped, λ in leaderboard:
+            out += "/u/%s|%1s|%s|%sλ\n" % (username, get_medal(λ)[:-1], times_helped, λ)
+        return out + "\nLast updated: %s" % get_time()
 
         
 
 if __name__ == "__main__":
-    file = open("pid.txt", "w")
-    file.write(str(os.getpid()))
-    file.close()
+    file_ = open("pid.txt", "w")
+    file_.write(str(os.getpid()))
+    file_.close()
 
     display("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
     main()
