@@ -69,7 +69,8 @@ def update_users_flair(username):
     if username in get_mods():
         newflair = "[🏆 ∞λ] %s" % (flairtext)
     else:
-        actualscore = db.get_lambda(username)[0]
+        with database.Database() as db:
+            actualscore = db.get_lambda(username)[0]
         newflair = "[%s%iλ] %s" % (get_medal(actualscore), actualscore, flairtext)
 
     logging.info("/u/%s had their flair updated" % username)
@@ -187,7 +188,7 @@ def handle_givelambda(comment):
         elif str(comment.author) in get_mods():
             text = "The moderator /u/%s has given /u/%s 1λ. /u/%s now has %iλ." % (str(comment.author), parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
             db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc)) 
-                display(text)
+            display(text)
         elif submission.link_flair_text in FREE_FLAIRS:
             text = "You cannot give lambda in free posts anymore."
         elif op != str(submission.author):
@@ -216,8 +217,8 @@ def handle_takelambda(comment):
         toremove = int(splitted[2].replace("\\", ""))
         reason = " ".join(splitted[3:])
     
-        text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
         with database.Database() as db:
+            text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
             db.change_lambda(user, -toremove)
         display("A moderator removed %i lambda from /u/%s for the reason '%s'" % (toremove,  user, reason))
     except Exception as e:
@@ -234,8 +235,8 @@ def handle_refundlambda(comment):
         toadd = int(splitted[2].replace("\\", ""))
         reason = " ".join(splitted[3:])
     
-        text = "/u/%s has had %iλ refunded for the reason '%s'. /u/%s now has %iλ" % (user, toadd, reason, user, db.get_lambda(user)[0] + toadd)
         with database.Database() as db:
+            text = "/u/%s has had %iλ refunded for the reason '%s'. /u/%s now has %iλ" % (user, toadd, reason, user, db.get_lambda(user)[0] + toadd)
             db.change_lambda(user, toadd)
         display("A moderator refunded %i lambda from /u/%s for the reason '%s'" % (toadd,  user, reason))
     except Exception as e:
