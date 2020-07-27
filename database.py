@@ -3,6 +3,8 @@ import sqlite3
 import subprocess
 import subreddit
 import time
+import datetime
+import re
 
 class Database:
     def __enter__(self):
@@ -17,40 +19,83 @@ class Database:
         self.__connection.close()
 
     def migrate(self, sqlitefile):
-        conn = sqlite3.connect(sqlitefile)
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM blacklist;")
-        blacklist = [i[1] for i in cur.fetchall()]
-        cur.close()
-        conn.close()
+        # conn = sqlite3.connect(sqlitefile)
+        # cur = conn.cursor()
+        # cur.execute("SELECT * FROM blacklist;")
+        # blacklist = [i[1] for i in cur.fetchall()]
+        # cur.close()
+        # conn.close()
+        # print("Got blacklist ids...")
 
         with self.__connection.cursor() as cursor:
-            cursor.execute("DELETE FROM blacklist;")
-            cursor.execute("""
-            ALTER TABLE blacklist CHANGE blacklistID blacklistID int(11) AUTO_INCREMENT;
-            """)
-            cursor.execute("""
-            ALTER TABLE lambdas CHANGE lambdaID lambdaID int(11) AUTO_INCREMENT;
-            """)
-            cursor.execute("""
-            ALTER TABLE lambdas DROP FOREIGN KEY lambdas_FK_0_0;
-            """)
-            cursor.execute("""
-            ALTER TABLE users CHANGE userID userID int(11) AUTO_INCREMENT;
-            """)
-            cursor.execute("""
-            ALTER TABLE lambdas ADD FOREIGN KEY (userID) REFERENCES users(userID);
-            """)
-            cursor.execute("""
-            ALTER TABLE stats CHANGE statID statID int(11) AUTO_INCREMENT;
-            """)
+        #     cursor.execute("DELETE FROM blacklist;")
+        #     cursor.execute("""
+        #     ALTER TABLE blacklist CHANGE blacklistID blacklistID int(11) AUTO_INCREMENT;
+        #     """)
+        #     cursor.execute("""
+        #     ALTER TABLE lambdas CHANGE lambdaID lambdaID int(11) AUTO_INCREMENT;
+        #     """)
+        #     cursor.execute("""
+        #     ALTER TABLE lambdas DROP FOREIGN KEY lambdas_FK_0_0;
+        #     """)
+        #     cursor.execute("""
+        #     ALTER TABLE users CHANGE userID userID int(11) AUTO_INCREMENT;
+        #     """)
+        #     cursor.execute("""
+        #     ALTER TABLE lambdas ADD FOREIGN KEY (userID) REFERENCES users(userID);
+        #     """)
+        #     cursor.execute("""
+        #     ALTER TABLE stats CHANGE statID statID int(11) AUTO_INCREMENT;
+        #     """)
+        #     print("Finished altering tables...")
 
-            #still cant get executemany to work :/
-            # cursor.executemany("INSERT INTO blacklist (prawID) VALUES (%s);", (blacklist, ))
-            for prawID in blacklist:
-                cursor.execute("INSERT INTO blacklist (prawID) VALUES (%s);", (prawID, ))
-        
+        #     #still cant get executemany to work :/
+        #     # cursor.executemany("INSERT INTO blacklist (prawID) VALUES (%s);", (blacklist, ))
+        #     for prawID in blacklist:
+        #         cursor.execute("INSERT INTO blacklist (prawID) VALUES (%s);", (prawID, ))
+        #     print("Finised adding blacklist ids...")
+
+            # cursor.execute("""
+            # CREATE TABLE IF NOT EXISTS log (
+            #     log_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            #     pid INT UNSIGNED NOT NULL,
+            #     datetime_ DATETIME NOT NULL,
+            #     category VARCHAR(10) NOT NULL DEFAULT 'INFO',
+            #     data_ VARCHAR(500) NOT NULL,
+            #     reddit_id VARCHAR(30) NULL
+            # );""")
+            # print("Added logging table...")
+
+            with open("actions.log", "r") as f:
+                for line in f:
+                    self.append_log(line, commit = False)
+            print("Done.")
+
         self.__connection.commit()
+
+    def append_log(self, line, permalink = None, commit = True):
+        s = line.split("\t")
+        if len(s) == 3:
+            pid = int(s[0])
+            try:
+                date = datetime.datetime.strptime(s[1][1:-1], "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                date = datetime.datetime.strptime(s[1][1:-1], "%b %d %Y %H:%M:%S")
+            misc = s[2].rstrip()
+            if re.search(r"{ERROR", misc) is not None:
+                category = "ERROR"
+            else:
+                category = "INFO"
+            
+            if len(misc) > 3:
+                with self.__connection.cursor() as cursor:
+                    cursor.execute("""
+                    INSERT INTO log (pid, datetime_, category, data_, reddit_id) VALUES (
+                        %s, %s, %s, %s, %s
+                    );""", (pid, date, category, misc, permalink))
+
+                if commit:
+                    self.__connection.commit()
 
     def change_lambda(self, user, changeby):
         with self.__connection.cursor() as cursor:
@@ -189,21 +234,22 @@ class Database:
         
 
 def migrate(sqlitefile):
-    subprocess.run([
-        "sqlite3mysql", 
-        "-f", sqlitefile,
-        "-d", "SmallYTChannel",
-        "-u", subreddit.CONFIG["mysql"]["user"], 
-        "-p", subreddit.CONFIG["mysql"]["passwd"]
-    ])
+    # subprocess.run([
+    #     "sqlite3mysql", 
+    #     "-f", sqlitefile,
+    #     "-d", "SmallYTChannel",
+    #     "-u", subreddit.CONFIG["mysql"]["user"], 
+    #     "-p", subreddit.CONFIG["mysql"]["passwd"]
+    # ])
+    print("Converted table...")
 
     with Database() as db:
         db.migrate(sqlitefile)
 
 if __name__ == "__main__":
-    # migrate("SmallYTChannelDatabase.db")
-    with Database() as db:
-        #db.give_lambda("floofleberries", "https://www.reddit.com/r/SmallYTChannel/comments/ho5b5p/new_video_advice_would_help_but_even_just_a_watch/")
-        print(db.get_lambda_leaderboard())
+    migrate("SmallYTChannelDatabase.db")
+    # with Database() as db:
+    #     #db.give_lambda("floofleberries", "https://www.reddit.com/r/SmallYTChannel/comments/ho5b5p/new_video_advice_would_help_but_even_just_a_watch/")
+    #     print(db.get_lambda_leaderboard())
 
 

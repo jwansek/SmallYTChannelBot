@@ -25,7 +25,7 @@ logging.basicConfig(
     format = "[%(asctime)s] %(message)s", 
     level = logging.INFO,
     handlers=[
-        logging.FileHandler("actions.log"),
+        # logging.FileHandler("actions.log"),
         logging.StreamHandler()
     ])
 
@@ -33,8 +33,10 @@ def get_time():
     #this is not the correct way to do this but I don't care
     return time.strftime("%b %d %Y %H:%M:%S", time.gmtime())
 
-def display(message):
+def display(message, concerning = None):
     logging.info(message)
+    with database.Database() as db:
+        db.append_log(message, concerning)
 
 def get_lambda_from_flair(s):
     result = re.search("\[(.*)\]", s)
@@ -188,7 +190,7 @@ def handle_givelambda(comment):
         elif str(comment.author) in get_mods():
             text = "The moderator /u/%s has given /u/%s 1λ. /u/%s now has %iλ." % (str(comment.author), parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
             db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc)) 
-            display(text)
+            display(text, concerning=comment.permalink)
         elif submission.link_flair_text in FREE_FLAIRS:
             text = "You cannot give lambda in free posts anymore."
         elif op != str(submission.author):
@@ -196,7 +198,7 @@ def handle_givelambda(comment):
         elif db.user_given_lambda(parentauthour, str(submission.permalink)):
             text = "You have already given /u/%s λ for this submission. Why not give λ to another user instead?" % parentauthour
         else:
-            display("'/u/%s' has given '/u/%s' lambda!" % (op, parentauthour))
+            display("'/u/%s' has given '/u/%s' lambda!" % (op, parentauthour), concerning=comment.permalink)
             text = "You have given /u/%s 1λ. /u/%s now has %iλ" % (parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
         
             #bonus lambda giving was removed
@@ -220,9 +222,9 @@ def handle_takelambda(comment):
         with database.Database() as db:
             text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
             db.change_lambda(user, -toremove)
-        display("A moderator removed %i lambda from /u/%s for the reason '%s'" % (toremove,  user, reason))
+        display("A moderator removed %i lambda from /u/%s for the reason '%s'" % (toremove,  user, reason), concerning=comment.permalink)
     except Exception as e:
-        display("{ERROR while removing λ} %s" % e)
+        display("{ERROR while removing λ} %s" % e, concerning=comment.permalink)
         text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
 
     update_users_flair(user)
@@ -238,9 +240,9 @@ def handle_refundlambda(comment):
         with database.Database() as db:
             text = "/u/%s has had %iλ refunded for the reason '%s'. /u/%s now has %iλ" % (user, toadd, reason, user, db.get_lambda(user)[0] + toadd)
             db.change_lambda(user, toadd)
-        display("A moderator refunded %i lambda from /u/%s for the reason '%s'" % (toadd,  user, reason))
+        display("A moderator refunded %i lambda from /u/%s for the reason '%s'" % (toadd,  user, reason), concerning=comment.permalink)
     except Exception as e:
-        display("{ERROR while refunding λ} %s" % e)
+        display("{ERROR while refunding λ} %s" % e, concerning=comment.permalink)
         text = r"An error was encountered. Please use the syntax `!refundlambda [user] [how much to add {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
 
     update_users_flair(user)
@@ -253,7 +255,7 @@ def handle_submission(submission):
         if "youtube.com" in str(submission.url) or "youtu.be" in str(submission.url):
             text = "Your post has been removed because it has the wrong flair. [Discussion], [Meta] and [Collab] flairs are only for text submissions."
             submission.mod.remove()
-            display("/u/%s had their submission removed for using the wrong flair." % submission.author)
+            display("/u/%s had their submission removed for using the wrong flair." % submission.author, concerning=submission.permalink)
         else:
             text = "Your post is a discussion, meta or collab post so it costs 0λ."
     else:
@@ -261,7 +263,7 @@ def handle_submission(submission):
             text = """Thank you for submitting to /r/SmallYTChannel. Unfortunally, you submission has been removed since you do not have enough λ. You need
             3λ to post. You currently have %iλ. For more information, read the [FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % score
             submission.mod.remove()
-            display("/u/%s had their submission removed for insufficient lambda." % submission.author)
+            display("/u/%s had their submission removed for insufficient lambda." % submission.author, concerning=submission.permalink)
         else:
             text = """Thank you for submitting to /r/SmallYTChannel. You have spent 3λ to submit here, making your current balance %iλ.
             /u/%s, please comment `!givelambda` to the most helpful advice you are given. 
@@ -361,7 +363,7 @@ def main():
                 with database.Database() as db:
                     if not db.id_in_blacklist(submission.id):
                         db.add_to_blacklist(submission.id)                         
-                        display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text))
+                        display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text), concerning=comment.permalink)
 
                         response = None
                         if str(submission.author) not in get_mods():
@@ -405,6 +407,6 @@ if __name__ == "__main__":
     with open("pid.txt", "w") as f:
         f.write(str(os.getpid()))
 
-    display("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
+    display("####################[%s] RESTARTED####################" % get_time())
     main()
 
