@@ -22,21 +22,23 @@ FREE_FLAIRS = CONFIG["free_flairs"]
 IMGUR = ImgurClient(**CONFIG["imgurapi"])
 
 logging.basicConfig( 
-    format = "[%(asctime)s] %(message)s", 
+    format = "%(process)s\t[%(asctime)s]\t%(message)s", 
     level = logging.INFO,
     handlers=[
-        # logging.FileHandler("actions.log"),
+        logging.FileHandler("actions.log"),
         logging.StreamHandler()
     ])
 
 def get_time():
-    #this is not the correct way to do this but I don't care
     return time.strftime("%b %d %Y %H:%M:%S", time.gmtime())
 
 def display(message, concerning = None):
     logging.info(message)
+
+    #yes it'd be prettier to do this with a logging.Handler, but alas
+    #due to `concerning` it'd be more complicated than doing it like this
     with database.Database() as db:
-        db.append_log(message, concerning)
+        db.append_log("%d\t[%s]\t%s" % (os.getpid(), get_time(), message), concerning)
 
 def get_lambda_from_flair(s):
     result = re.search("\[(.*)\]", s)
