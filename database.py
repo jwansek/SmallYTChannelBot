@@ -70,7 +70,7 @@ class Database:
                 datetime_ DATETIME NOT NULL,
                 category VARCHAR(10) NOT NULL DEFAULT 'INFO',
                 data_ VARCHAR(500) NOT NULL,
-                reddit_id VARCHAR(30) NULL
+                reddit_id VARCHAR(120) NULL
             );""")
             print("Added logging table...")
 

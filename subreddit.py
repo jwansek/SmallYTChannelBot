@@ -365,7 +365,7 @@ def main():
                 with database.Database() as db:
                     if not db.id_in_blacklist(submission.id):
                         db.add_to_blacklist(submission.id)                         
-                        display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text), concerning=comment.permalink)
+                        display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text), concerning=submission.permalink)
 
                         response = None
                         if str(submission.author) not in get_mods():
@@ -374,7 +374,7 @@ def main():
                             reply.mod.distinguish(sticky = True)
                             reply.mod.approve()
 
-        except Exception as e:
+        except KeyboardInterrupt as e:
             display("{ERROR} %s" % e)
             continue
 
