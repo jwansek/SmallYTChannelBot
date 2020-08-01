@@ -1,10 +1,25 @@
 # /u/SmallYTChannelBot Source Code
 
-The source code for /u/SmallYTChannelBot. Currently refactoring is in progress.
+The source code for /u/SmallYTChannelBot. This is a WIP branch that uses MySQL
+instead of SQLite3 and is designed to work in a docker container.
+
+# Docker
+
+- Clone the repo
+
+- Edit the configuration file and rename
+
+- If applicable, download the newest SQLite3 database and run the migration script
+
+- Build the image:
+
+`sudo docker build -t smallytchannelbot:latest .`
+
+- Start the container:
+
+`sudo docker run --name smallytchannelbot --net=host -d smallytchannelbot`
 
 # TODOs
-
-- [x] Automatically flair when [] is in submission title (done with AutoModerator)
 
 - [ ] Implement `!recheck` command to recheck already removed submissions
 
@@ -13,22 +28,6 @@ The source code for /u/SmallYTChannelBot. Currently refactoring is in progress.
 - [ ] Write a bot for the discord
 
 - [ ] Implement a stream for edited comments
-
-- [x] Removed giving lambda in free posts
-
-- [x] Removed lambda for giving lambda
-
-- [x] Switched to using a JSON file for configuration, included template
-
-- [x] Refactored main code
-
-- [x] Changed license from MIT to GPLv3
-
-- [x] Update flair when using the !takelambda command
-
-- [x] Reimplented the `!takelambda` command
-
-- [x] Change `!takelambda` to `!refundlambda` when negative
 
 # About the database's structure
 
