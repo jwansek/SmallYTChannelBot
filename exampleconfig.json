@@ -1,20 +1,20 @@
 {
     "redditapi":
     {
-        "client_id": "xxxxxxxxxxxxx",
-        "client_secret": "xxxxxxxxxxxxxxxxxxxxxxxx",
-        "user_agent": "xxxxxxxxxxxxxxx",
-        "username": "xxxxxxxxxxxxxxx",
-        "password": "xxxxxxxxxxxxxxxxxxxx"
+        "client_id": "xxxxxxxxxxxxxxx",
+        "client_secret": "xxxxxxxxxxxxxxxxxxxx",
+        "user_agent": "SmallYTChannelBot",
+        "username": "xxxxxxxxxxxxxxxxx",
+        "password": "xxxxxxxxxxxxxxxxxxxxx"
     },
     "imgurapi":
     {
-        "client_id": "xxxxxxxxxxxxxxxxx",
-        "client_secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "client_id": "xxxxxxxxxxxxxxxxxxxx",
+        "client_secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     },
     "youtubeapi":
     {
-        "developer_key": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        "developer_key": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     },
     "subreddit": "jwnskanzkwktest",
     "comment_tail": "\n\n\n ^/u/SmallYTChannelBot ^*made* ^*by* ^/u/jwnskanzkwk. ^*PM* ^*for* ^*bug* ^*reports.* ^*For* ^*more* ^*information,* ^*read* ^*the* ^[FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)",
@@ -23,5 +23,13 @@
         "Discussion",
         "Meta", 
         "Collab"
-    ]
+    ],
+    "mysql":
+    {
+        "host": "localhost",
+        "port": 3306,
+        "user": "root",
+        "passwd": "xxxxxxxxxxxxxxxxx",
+        "database": "SmallYTChannel"
+    }
 }
