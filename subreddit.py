@@ -4,7 +4,7 @@ import database
 import datetime
 import logging
 import ytapi
-import graph
+# import graph
 import time
 import praw
 import json
