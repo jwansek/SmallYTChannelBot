@@ -1,6 +1,6 @@
 from imgurpython import ImgurClient
 from operator import itemgetter
-from database import Database
+import database
 import datetime
 import logging
 import ytapi
@@ -21,10 +21,8 @@ FREE_FLAIRS = CONFIG["free_flairs"]
 
 IMGUR = ImgurClient(**CONFIG["imgurapi"])
 
-db = Database()
-
 logging.basicConfig( 
-    format = "[%(asctime)s] %(message)s", 
+    format = "%(process)s\t[%(asctime)s]\t%(message)s", 
     level = logging.INFO,
     handlers=[
         logging.FileHandler("actions.log"),
@@ -32,11 +30,15 @@ logging.basicConfig(
     ])
 
 def get_time():
-    #this is not the correct way to do this but I don't care
     return time.strftime("%b %d %Y %H:%M:%S", time.gmtime())
 
-def display(message):
+def display(message, concerning = None):
     logging.info(message)
+
+    #yes it'd be prettier to do this with a logging.Handler, but alas
+    #due to `concerning` it'd be more complicated than doing it like this
+    with database.Database() as db:
+        db.append_log("%d\t[%s]\t%s" % (os.getpid(), get_time(), message), concerning)
 
 def get_lambda_from_flair(s):
     result = re.search("\[(.*)\]", s)
@@ -71,7 +73,8 @@ def update_users_flair(username):
     if username in get_mods():
         newflair = "[🏆 ∞λ] %s" % (flairtext)
     else:
-        actualscore = db.get_lambda(username)[0]
+        with database.Database() as db:
+            actualscore = db.get_lambda(username)[0]
         newflair = "[%s%iλ] %s" % (get_medal(actualscore), actualscore, flairtext)
 
     logging.info("/u/%s had their flair updated" % username)
@@ -112,13 +115,13 @@ def update_tables(scores, data):
     
     REDDIT.subreddit("u_SmallYTChannelBot").submit("/r/SmallYTChannel Statistics: %s" % date, url = imageurl).reply(content).mod.distinguish(sticky = True)
 
-    SUBREDDIT.wiki["lambdatables"].edit(content, reason = "Update: %s" % date)
-    SUBREDDIT.wiki[date].edit(content, reason = "Update: %s" % date)
+    #SUBREDDIT.wiki["lambdatables"].edit(content, reason = "Update: %s" % date)
+    #SUBREDDIT.wiki[date].edit(content, reason = "Update: %s" % date)
 
-    currentdata = SUBREDDIT.wiki["index"].content_md
-    currentdata += "\n\n* [%s](/r/SmallYTChannel/wiki/%s)" % (date, date)
+    #currentdata = SUBREDDIT.wiki["index"].content_md
+    #currentdata += "\n\n* [%s](/r/SmallYTChannel/wiki/%s)" % (date, date)
 
-    SUBREDDIT.wiki["index"].edit(currentdata, reason = "Update: %s" % date)
+    #SUBREDDIT.wiki["index"].edit(currentdata, reason = "Update: %s" % date)
 
 def upload_image(path, date):
     config = {
@@ -135,9 +138,10 @@ def upload_image(path, date):
 def every_day():
     display("Starting every day program...")
     display("Updating database statistics...")
-    db.update_stats()
-    display("Posting and updating wiki...")
-    update_tables(db.get_scores(), db.get_stats())
+    with database.Database() as db:
+        db.update_stats()
+        display("Posting and updating wiki...")
+        update_tables(db.get_scores(), db.get_stats())
     display("Formatting leaderboard...")
     leaderboard = format_monthly_leaderboard()
     display("Updating sidebar...")
@@ -154,7 +158,8 @@ def every_day():
 
 def handle_mylambda(comment):
     author = str(comment.author)
-    λ, links = db.get_lambda(author)
+    with database.Database() as db:
+        λ, links = db.get_lambda(author)
     if author in get_mods():
         text = "/u/%s is a moderator, and therefore has ∞λ." % author
     else:
@@ -179,30 +184,36 @@ def handle_givelambda(comment):
     submission = comment.submission
     parentauthour = str(comment.parent().author)
     op = str(comment.author)
-    if op == parentauthour:
-        text = "You cannot give yourself λ."
-    elif parentauthour == "SmallYTChannelBot":
-        text = "Please only give lambda to humans."
-    elif str(comment.author) in get_mods():
-        text = "The moderator /u/%s has given /u/%s 1λ. /u/%s now has %iλ." % (str(comment.author), parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
-        db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc)) 
-        display(text)
-    elif submission.link_flair_text in FREE_FLAIRS:
-        text = "You cannot give lambda in free posts anymore."
-    elif op != str(submission.author):
-        text = "Only the OP can give λ."
-    elif db.user_given_lambda(parentauthour, str(submission.permalink)):
-        text = "You have already given /u/%s λ for this submission. Why not give λ to another user instead?" % parentauthour
-    else:
-        display("'/u/%s' has given '/u/%s' lambda!" % (op, parentauthour))
-        text = "You have given /u/%s 1λ. /u/%s now has %iλ" % (parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
+    with database.Database() as db:
+        if op == parentauthour:
+            text = "You cannot give yourself λ."
+        elif parentauthour == "SmallYTChannelBot":
+            text = "Please only give lambda to humans."
+        elif str(comment.author) in get_mods():
+            text = "The moderator /u/%s has given /u/%s 1λ. /u/%s now has %iλ." % (str(comment.author), parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
+            db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc)) 
+            display(text, concerning=comment.permalink)
+        elif submission.link_flair_text in FREE_FLAIRS:
+            text = "You cannot give lambda in free posts anymore."
+            display("Giving lambda was rejected due to being a free post", concerning=comment.permalink)
+        elif op != str(submission.author):
+            text = "Only the OP can give λ."
+        elif db.user_given_lambda(parentauthour, str(submission.permalink)):
+            text = "You have already given /u/%s λ for this submission. Why not give λ to another user instead?" % parentauthour
+            display("Giving lambda was rejected for being the same user", concerning=comment.permalink)
+        elif len(comment.parent().body) < CONFIG["min_comment_len"]:
+            text = "You can no longer give λ to comments that are fewer than %i characters in length. This is to encourage specific, detailed feedback." % CONFIG["min_comment_len"]
+            display("Giving lambda was rejected due to insufficient length", concerning=comment.permalink)
+        else:
+            display("'/u/%s' has given '/u/%s' lambda!" % (op, parentauthour), concerning=comment.permalink)
+            text = "You have given /u/%s 1λ. /u/%s now has %iλ" % (parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
         
-        #bonus lambda giving was removed
-        # if not db.link_in_db(submission.permalink) or not db.link_in_db(submission.permalink.replace("https://www.reddit.com", "")):
-        #     db.give_lambda(parentauthour, submission.permalink, op)
-        #     display("The OP received lambda too!")
-        # else:
-        db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc))
+            #bonus lambda giving was removed
+            # if not db.link_in_db(submission.permalink) or not db.link_in_db(submission.permalink.replace("https://www.reddit.com", "")):
+            #     db.give_lambda(parentauthour, submission.permalink, op)
+            #     display("The OP received lambda too!")
+            # else:
+            db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc))
     
     # update_users_flair_from_comment(comment)
     update_users_flair_from_comment(comment.parent())
@@ -215,11 +226,12 @@ def handle_takelambda(comment):
         toremove = int(splitted[2].replace("\\", ""))
         reason = " ".join(splitted[3:])
     
-        text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
-        db.change_lambda(user, -toremove)
-        display("A moderator removed %i lambda from /u/%s for the reason '%s'" % (toremove,  user, reason))
+        with database.Database() as db:
+            text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
+            db.change_lambda(user, -toremove)
+        display("A moderator removed %i lambda from /u/%s for the reason '%s'" % (toremove,  user, reason), concerning=comment.permalink)
     except Exception as e:
-        display("{ERROR while removing λ} %s" % e)
+        display("{ERROR while removing λ} %s" % e, concerning=comment.permalink)
         text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
 
     update_users_flair(user)
@@ -232,23 +244,25 @@ def handle_refundlambda(comment):
         toadd = int(splitted[2].replace("\\", ""))
         reason = " ".join(splitted[3:])
     
-        text = "/u/%s has had %iλ refunded for the reason '%s'. /u/%s now has %iλ" % (user, toadd, reason, user, db.get_lambda(user)[0] + toadd)
-        db.change_lambda(user, toadd)
-        display("A moderator refunded %i lambda from /u/%s for the reason '%s'" % (toadd,  user, reason))
+        with database.Database() as db:
+            text = "/u/%s has had %iλ refunded for the reason '%s'. /u/%s now has %iλ" % (user, toadd, reason, user, db.get_lambda(user)[0] + toadd)
+            db.change_lambda(user, toadd)
+        display("A moderator refunded %i lambda from /u/%s for the reason '%s'" % (toadd,  user, reason), concerning=comment.permalink)
     except Exception as e:
-        display("{ERROR while refunding λ} %s" % e)
+        display("{ERROR while refunding λ} %s" % e, concerning=comment.permalink)
         text = r"An error was encountered. Please use the syntax `!refundlambda [user] [how much to add {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
 
     update_users_flair(user)
     return text
 
 def handle_submission(submission):
-    score = db.get_lambda(str(submission.author))[0]
+    with database.Database() as db:
+        score = db.get_lambda(str(submission.author))[0]
     if submission.link_flair_text in FREE_FLAIRS:
         if "youtube.com" in str(submission.url) or "youtu.be" in str(submission.url):
             text = "Your post has been removed because it has the wrong flair. [Discussion], [Meta] and [Collab] flairs are only for text submissions."
             submission.mod.remove()
-            display("/u/%s had their submission removed for using the wrong flair." % submission.author)
+            display("/u/%s had their submission removed for using the wrong flair." % submission.author, concerning=submission.permalink)
         else:
             text = "Your post is a discussion, meta or collab post so it costs 0λ."
     else:
@@ -256,12 +270,13 @@ def handle_submission(submission):
             text = """Thank you for submitting to /r/SmallYTChannel. Unfortunally, you submission has been removed since you do not have enough λ. You need
             3λ to post. You currently have %iλ. For more information, read the [FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % score
             submission.mod.remove()
-            display("/u/%s had their submission removed for insufficient lambda." % submission.author)
+            display("/u/%s had their submission removed for insufficient lambda." % submission.author, concerning=submission.permalink)
         else:
             text = """Thank you for submitting to /r/SmallYTChannel. You have spent 3λ to submit here, making your current balance %iλ.
             /u/%s, please comment `!givelambda` to the most helpful advice you are given. 
             For more information, read the [FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % (score - 3, str(submission.author))
-            db.change_lambda(str(submission.author), -3)
+            with database.Database() as db:
+                db.change_lambda(str(submission.author), -3)
 
             try:
                 ytid = ytapi.get_videoId_from_url(submission.url)
@@ -326,41 +341,45 @@ def main():
             for comment in comment_stream:
                 if comment is None:
                     break
-                if not db.id_in_blacklist(comment.id):
-                    db.add_to_blacklist(comment.id)
 
-                    response = None
-                    if "!mylambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
-                        response = handle_mylambda(comment)
+                with database.Database() as db:
+                    if not db.id_in_blacklist(comment.id):
+                        db.add_to_blacklist(comment.id)
+    
+                        response = None
+                        if "!mylambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
+                            response = handle_mylambda(comment)
+        
+                        if "!givelambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
+                            response = handle_givelambda(comment)        
 
-                    if "!givelambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
-                        response = handle_givelambda(comment)        
+                        if comment.body.startswith("!takelambda") and str(comment.author) in get_mods():
+                            response = handle_takelambda(comment)
 
-                    if comment.body.startswith("!takelambda") and str(comment.author) in get_mods():
-                        response = handle_takelambda(comment)
+                        if comment.body.startswith("!refundlambda") and str(comment.author) in get_mods():
+                            response = handle_refundlambda(comment)
 
-                    if comment.body.startswith("!refundlambda") and str(comment.author) in get_mods():
-                        response = handle_refundlambda(comment)
-
-                    if response is not None:
-                        reply = comment.reply(response + COMMENT_TAIL)
-                        reply.mod.distinguish(sticky = False)
-
+                        if response is not None:
+                            reply = comment.reply(response + COMMENT_TAIL)
+                            reply.mod.distinguish(sticky = False)
+    
             for submission in submission_stream:
                 if submission is None:
                     break
-                if not db.id_in_blacklist(submission.id):
-                    db.add_to_blacklist(submission.id)                         
-                    display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text))
 
-                    response = None
-                    if str(submission.author) not in get_mods():
-                        response = handle_submission(submission)
-                        reply = submission.reply(response + COMMENT_TAIL)
-                        reply.mod.distinguish(sticky = True)
-                        reply.mod.approve()
+                with database.Database() as db:
+                    if not db.id_in_blacklist(submission.id):
+                        db.add_to_blacklist(submission.id)                         
+                        display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text), concerning=submission.permalink)
 
-        except Exception as e:
+                        response = None
+                        if str(submission.author) not in get_mods():
+                            response = handle_submission(submission)
+                            reply = submission.reply(response + COMMENT_TAIL)
+                            reply.mod.distinguish(sticky = True)
+                            reply.mod.approve()
+
+        except KeyboardInterrupt as e:
             display("{ERROR} %s" % e)
             continue
 
@@ -373,27 +392,28 @@ def get_submission_times(permalink):
 
 def add_times_to_lambdas():
     updated_permalinks = []
-    for id_, permalink, user, created in db.get_all_lambdas():
-        if created is None and permalink not in updated_permalinks:
-            db.add_date_to_permalink(permalink, get_submission_times(permalink))
-            updated_permalinks.append(permalink)
-            logging.info("Added date for permalink %s" % permalink)
+    with database.Database() as db:
+        for id_, permalink, user, created in db.get_all_lambdas():
+            if created is None and permalink not in updated_permalinks:
+                db.add_date_to_permalink(permalink, get_submission_times(permalink))
+                updated_permalinks.append(permalink)
+                logging.info("Added date for permalink %s" % permalink)
 
 
 def format_monthly_leaderboard():
-    leaderboard = db.get_lambda_leaderboard()
-    out = "**Username**|**Medal**|**Times Helped**|**Lambda**\n:-|:-|:-|:-\n"
-    for username, times_helped, λ in leaderboard:
-        out += "/u/%s|%1s|%s|%sλ\n" % (username, get_medal(λ)[:-1], times_helped, λ)
-    return out + "\nLast updated: %s" % get_time()
+    with database.Database() as db:
+        leaderboard = db.get_lambda_leaderboard()
+        out = "**Username**|**Medal**|**Times Helped**|**Lambda**\n:-|:-|:-|:-\n"
+        for username, times_helped, λ in leaderboard:
+            out += "/u/%s|%1s|%s|%sλ\n" % (username, get_medal(λ)[:-1], times_helped, λ)
+        return out + "\nLast updated: %s" % get_time()
 
         
 
 if __name__ == "__main__":
-    file = open("pid.txt", "w")
-    file.write(str(os.getpid()))
-    file.close()
+    with open("pid.txt", "w") as f:
+        f.write(str(os.getpid()))
 
-    display("\n####################\n[%s] RESTARTED\n####################\n" % get_time())
+    display("####################[%s] RESTARTED####################" % get_time())
     main()
 

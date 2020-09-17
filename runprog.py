@@ -16,7 +16,7 @@ while True:
     pid = file.readlines()[0]
     file.close()
 
-    subprocess.run(["kill", pid])
+    # subprocess.run(["kill", pid])
     thread.terminate()
 
     print("killed ", pid)
