@@ -1,15 +1,12 @@
 # /u/SmallYTChannelBot Source Code
 
-The source code for /u/SmallYTChannelBot. This is a WIP branch that uses MySQL
-instead of SQLite3 and is designed to work in a docker container.
+The source code for /u/SmallYTChannelBot.
 
 # Docker
 
 - Clone the repo
 
 - Edit the configuration file and rename
-
-- If applicable, download the newest SQLite3 database and run the migration script
 
 - Build the image:
 

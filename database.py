@@ -1,5 +1,4 @@
 import pymysql
-import sqlite3
 import subprocess
 import subreddit
 import time
@@ -18,68 +17,6 @@ class Database:
 
     def __exit__(self, type, value, traceback):
         self.__connection.close()
-
-    def migrate(self, sqlitefile):
-        """Function for converting data from an SQLite3 database to
-        MySQL. Will only be called once ever probably. First the data is
-        converted using migrate() global function.
-
-        Args:
-            sqlitefile (str): Path to the SQLite3 file
-        """
-        conn = sqlite3.connect(sqlitefile)
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM blacklist;")
-        blacklist = [i[1] for i in cur.fetchall()]
-        cur.close()
-        conn.close()
-        print("Got blacklist ids...")
-
-        with self.__connection.cursor() as cursor:
-            cursor.execute("DELETE FROM blacklist;")
-            cursor.execute("""
-            ALTER TABLE blacklist CHANGE blacklistID blacklistID int(11) AUTO_INCREMENT;
-            """)
-            cursor.execute("""
-            ALTER TABLE lambdas CHANGE lambdaID lambdaID int(11) AUTO_INCREMENT;
-            """)
-            cursor.execute("""
-            ALTER TABLE lambdas DROP FOREIGN KEY lambdas_FK_0_0;
-            """)
-            cursor.execute("""
-            ALTER TABLE users CHANGE userID userID int(11) AUTO_INCREMENT;
-            """)
-            cursor.execute("""
-            ALTER TABLE lambdas ADD FOREIGN KEY (userID) REFERENCES users(userID);
-            """)
-            cursor.execute("""
-            ALTER TABLE stats CHANGE statID statID int(11) AUTO_INCREMENT;
-            """)
-            print("Finished altering tables...")
-
-            #still cant get executemany to work :/
-            # cursor.executemany("INSERT INTO blacklist (prawID) VALUES (%s);", (blacklist, ))
-            for prawID in blacklist:
-                cursor.execute("INSERT INTO blacklist (prawID) VALUES (%s);", (prawID, ))
-            print("Finised adding blacklist ids...")
-
-            cursor.execute("""
-            CREATE TABLE IF NOT EXISTS log (
-                log_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                pid INT UNSIGNED NULL,
-                datetime_ DATETIME NOT NULL,
-                category VARCHAR(10) NOT NULL DEFAULT 'INFO',
-                data_ VARCHAR(500) NOT NULL,
-                reddit_id VARCHAR(120) NULL
-            );""")
-            print("Added logging table...")
-
-            with open("actions.log", "r") as f:
-                for line in f:
-                    self.append_log(line, commit = False)
-            print("Done.")
-
-        self.__connection.commit()
 
     def append_log(self, line, permalink = None, commit = True):
         """Function for adding a log file line to the database. Switched to
@@ -265,25 +202,7 @@ class Database:
             """)
             return cursor.fetchall()
 
-def migrate(sqlitefile):
-    subprocess.run([
-        "sqlite3mysql", 
-        "-f", sqlitefile,
-        "-h", subreddit.CONFIG["mysql"]["host"],
-        "-d", subreddit.CONFIG["mysql"]["database"],
-        "-u", subreddit.CONFIG["mysql"]["user"], 
-        "-p", subreddit.CONFIG["mysql"]["passwd"]
-    ])
-    print("Converted table...")
-
-    with Database() as db:
-        db.migrate(sqlitefile)
-
 if __name__ == "__main__":
-    #migrate("SmallYTChannelDatabase.db")
-    # with Database() as db:
-    #     #db.give_lambda("floofleberries", "https://www.reddit.com/r/SmallYTChannel/comments/ho5b5p/new_video_advice_would_help_but_even_just_a_watch/")
-    #     print(db.id_in_blacklist("hyy6v0"))
     print(subreddit.format_monthly_leaderboard())
 
 

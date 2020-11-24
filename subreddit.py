@@ -15,6 +15,7 @@ with open("config.json", "r") as f:
     CONFIG = json.load(f)
 
 REDDIT = praw.Reddit(**CONFIG["redditapi"])
+REDDIT.validate_on_submit = True
 SUBREDDIT = REDDIT.subreddit(CONFIG["subreddit"])
 COMMENT_TAIL = CONFIG["comment_tail"]
 FREE_FLAIRS = CONFIG["free_flairs"]
@@ -63,14 +64,14 @@ def get_medal(actualscore):
     else:
         return ""
 
-def update_users_flair(username):
-    flairtext = next(SUBREDDIT.flair(redditor=username))["flair_text"]
+def update_users_flair(username, reddit):
+    flairtext = next(reddit.flair(redditor=username))["flair_text"]
     if flairtext is None:
         flairtext = ""
     else:
         flairscore = get_lambda_from_flair(flairtext)
         flairtext = str(flairtext.replace("[%s] " % flairscore, ""))
-    if username in get_mods():
+    if username in get_mods(reddit):
         newflair = "[🏆 ∞λ] %s" % (flairtext)
     else:
         with database.Database() as db:
@@ -78,89 +79,16 @@ def update_users_flair(username):
         newflair = "[%s%iλ] %s" % (get_medal(actualscore), actualscore, flairtext)
 
     logging.info("/u/%s had their flair updated" % username)
-    SUBREDDIT.flair.set(redditor = username, text = newflair)
+    reddit.flair.set(redditor = username, text = newflair)
 
-def get_mods():
-    return [str(i) for i in SUBREDDIT.moderator()] + ["AutoModerator"]
+def get_mods(reddit):
+    return [str(i) for i in reddit.subreddit(CONFIG["subreddit"]).moderator()] + ["AutoModerator"]
 
-def update_tables(scores, data):
-    content = ""
-    date = str(datetime.date.today())
-    mods = get_mods()
-    imagepath = graph.make_graph(data)
-    imageurl = upload_image(imagepath, date)
-    bylambda = [i for i in sorted(scores, key = itemgetter(1), reverse = True) if i[0] not in mods][:10]
-    byhelps = sorted(scores, key = itemgetter(2), reverse = True)[:10]
-
-    SUBREDDIT.stylesheet.upload("wikigraph", imagepath)
-
-    content += "\n\n##/r/SmallYTChannel lambda tables: %s" % date
-
-    content += "\n\n###By lambda:"
-    content += "\n\nUsername|Lambda|Help given\n:--|:--|:--"
-    for line in bylambda:
-        content += "\n/u/%s|%i|%i" % (line[0], line[1], line[2])
-
-    content += "\n\n###By Help given:"
-    content += "\n\nUsername|Lambda|Help given\n:--|:--|:--"
-    for line in byhelps:
-        λ = str(line[1])
-        if line[0] in mods:
-            λ = "∞"
-        content += "\n/u/%s|%s|%i" % (line[0], λ, line[2])
-
-    content += "\n\n##Statistics from %s:\n\nIf you're looking at this through the wiki, not through the bot's profile, then" % (date)
-    content += "the most up-to-date graph will be shown below. To see the graph at this date, follow [this link.](%s)" % (imageurl)
-    content += "\n\n![](%%%%wikigraph%%%%)\n\nTotal λ in circulation|Useful advice given|Unique users\n:--|:--|:--\n%i|%i|%i" % (data[-1][1], data[-1][2], data[-1][3])
-    
-    REDDIT.subreddit("u_SmallYTChannelBot").submit("/r/SmallYTChannel Statistics: %s" % date, url = imageurl).reply(content).mod.distinguish(sticky = True)
-
-    #SUBREDDIT.wiki["lambdatables"].edit(content, reason = "Update: %s" % date)
-    #SUBREDDIT.wiki[date].edit(content, reason = "Update: %s" % date)
-
-    #currentdata = SUBREDDIT.wiki["index"].content_md
-    #currentdata += "\n\n* [%s](/r/SmallYTChannel/wiki/%s)" % (date, date)
-
-    #SUBREDDIT.wiki["index"].edit(currentdata, reason = "Update: %s" % date)
-
-def upload_image(path, date):
-    config = {
-		'album': None,
-		'name':  'SmallYTChannelBot Statistics graph: %s' % date,
-		'title': 'SmallYTChannelBot Statistics graph: %s' % date,
-		'description': 'SmallYTChannelBot Statistics graph: %s' % date
-    }
-
-    image = IMGUR.upload_from_path(path, config = config)
-
-    return "https://i.imgur.com/%s.png" % image["id"]
-
-def every_day():
-    display("Starting every day program...")
-    display("Updating database statistics...")
-    with database.Database() as db:
-        db.update_stats()
-        display("Posting and updating wiki...")
-        update_tables(db.get_scores(), db.get_stats())
-    display("Formatting leaderboard...")
-    leaderboard = format_monthly_leaderboard()
-    display("Updating sidebar...")
-    #it'd be cool to find a way to access this directly without iteration
-    for widget in SUBREDDIT.widgets.sidebar:
-        if widget.shortName == "Monthly Lambda Leaderboard":
-            widget.mod.update(text = leaderboard)
-            display("Updated in new reddit...")
-    sidebar = SUBREDDIT.mod.settings()["description"]
-    oldtable = sidebar.split("------")[-1]
-    SUBREDDIT.mod.update(description = sidebar.replace(oldtable, "\n\n## Monthly Lambda Leaderboard\n\n" + leaderboard))
-    display("Updated in old reddit...")
-    display("Completed.")
-
-def handle_mylambda(comment):
+def handle_mylambda(comment, reddit):
     author = str(comment.author)
     with database.Database() as db:
         λ, links = db.get_lambda(author)
-    if author in get_mods():
+    if author in get_mods(reddit):
         text = "/u/%s is a moderator, and therefore has ∞λ." % author
     else:
         text = "/u/%s currently has %iλ, and has helped helping the following posts:" % (author, λ)
@@ -180,7 +108,7 @@ def handle_mylambda(comment):
     update_users_flair_from_comment(comment)
     return text
 
-def handle_givelambda(comment):
+def handle_givelambda(comment, reddit):
     submission = comment.submission
     parentauthour = str(comment.parent().author)
     op = str(comment.author)
@@ -189,7 +117,7 @@ def handle_givelambda(comment):
             text = "You cannot give yourself λ."
         elif parentauthour == "SmallYTChannelBot":
             text = "Please only give lambda to humans."
-        elif str(comment.author) in get_mods():
+        elif str(comment.author) in get_mods(reddit):
             text = "The moderator /u/%s has given /u/%s 1λ. /u/%s now has %iλ." % (str(comment.author), parentauthour, parentauthour, db.get_lambda(parentauthour)[0] + 1)
             db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc)) 
             display(text, concerning=comment.permalink)
@@ -332,88 +260,56 @@ Views|%s
     update_users_flair(str(submission.author))
     return text
 
-def main():
-    comment_stream = SUBREDDIT.stream.comments(pause_after=-1)
-    submission_stream = SUBREDDIT.stream.submissions(pause_after=-1)
+def handle_comment(comment, reddit):
+    response = None
+    if "!mylambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
+        response = handle_mylambda(comment, reddit)
 
-    while True:
-        try:
-            for comment in comment_stream:
-                if comment is None:
-                    break
+    if "!givelambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
+        response = handle_givelambda(comment, reddit)        
 
-                with database.Database() as db:
-                    if not db.id_in_blacklist(comment.id):
-                        db.add_to_blacklist(comment.id)
-    
-                        response = None
-                        if "!mylambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
-                            response = handle_mylambda(comment)
-        
-                        if "!givelambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
-                            response = handle_givelambda(comment)        
+    if comment.body.startswith("!takelambda") and str(comment.author) in get_mods():
+        response = handle_takelambda(comment)
 
-                        if comment.body.startswith("!takelambda") and str(comment.author) in get_mods():
-                            response = handle_takelambda(comment)
+    if comment.body.startswith("!refundlambda") and str(comment.author) in get_mods():
+        response = handle_refundlambda(comment)
 
-                        if comment.body.startswith("!refundlambda") and str(comment.author) in get_mods():
-                            response = handle_refundlambda(comment)
+    if response is not None:
+        reply = comment.reply(response + COMMENT_TAIL)
+        reply.mod.distinguish(sticky = False)
 
-                        if response is not None:
-                            reply = comment.reply(response + COMMENT_TAIL)
-                            reply.mod.distinguish(sticky = False)
-    
-            for submission in submission_stream:
-                if submission is None:
-                    break
+def stream(reddit):
+    subreddit = reddit.subreddit(CONFIG["subreddit"])
+    streams = [subreddit.stream.comments(pause_after=-1), subreddit.stream.submissions(pause_after=-1)]
+    with database.Database() as db:
+        while True:
+            for stream in streams:
+                for item in stream:
+                    if item is None:
+                        break
 
-                with database.Database() as db:
-                    if not db.id_in_blacklist(submission.id):
-                        db.add_to_blacklist(submission.id)                         
-                        display("There has been a new submission: '%s', with flair '%s'" % (submission.title, submission.link_flair_text), concerning=submission.permalink)
+                    if db.id_in_blacklist(item.id):
+                        continue
 
-                        response = None
-                        if str(submission.author) not in get_mods():
-                            response = handle_submission(submission)
-                            reply = submission.reply(response + COMMENT_TAIL)
+                    db.add_to_blacklist(item.id)
+                    if type(item) is praw.models.reddit.comment.Comment:
+                        handle_comment(item, reddit)
+
+                    elif type(item) is praw.models.reddit.submission.Submission:
+                        display("There has been a new submission: '%s', with flair '%s'" % (item.title, item.link_flair_text), concerning=item.permalink)
+
+                        if str(item.author) not in get_mods(reddit):
+                            reply = item.reply(handle_submission(item) + COMMENT_TAIL)
                             reply.mod.distinguish(sticky = True)
                             reply.mod.approve()
 
-        except KeyboardInterrupt as e:
-            display("{ERROR} %s" % e)
-            continue
-
-def get_submission_times(permalink):
-    if not permalink.startswith("https://www.reddit.com"):
-        permalink = "https://www.reddit.com" + permalink
-
-    submission = REDDIT.submission(url = permalink)
-    return submission.created_utc
-
-def add_times_to_lambdas():
-    updated_permalinks = []
-    with database.Database() as db:
-        for id_, permalink, user, created in db.get_all_lambdas():
-            if created is None and permalink not in updated_permalinks:
-                db.add_date_to_permalink(permalink, get_submission_times(permalink))
-                updated_permalinks.append(permalink)
-                logging.info("Added date for permalink %s" % permalink)
+def main():
+    reddit = praw.Reddit(**CONFIG["redditapi"])
+    reddit.validate_on_submit = True
+    stream(reddit)
 
 
-def format_monthly_leaderboard():
-    with database.Database() as db:
-        leaderboard = db.get_lambda_leaderboard()
-        out = "**Username**|**Medal**|**Times Helped**|**Lambda**\n:-|:-|:-|:-\n"
-        for username, times_helped, λ in leaderboard:
-            out += "/u/%s|%1s|%s|%sλ\n" % (username, get_medal(λ)[:-1], times_helped, λ)
-        return out + "\nLast updated: %s" % get_time()
-
-        
 
 if __name__ == "__main__":
-    with open("pid.txt", "w") as f:
-        f.write(str(os.getpid()))
-
-    display("####################[%s] RESTARTED####################" % get_time())
     main()
 
