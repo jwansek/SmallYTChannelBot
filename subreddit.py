@@ -48,9 +48,9 @@ def get_lambda_from_flair(s):
     else:
         return ""
 
-def update_users_flair_from_comment(comment):
+def update_users_flair_from_comment(comment, reddit):
     #implemented only for legacy
-    update_users_flair(str(comment.author))
+    update_users_flair(str(comment.author), reddit)
 
 def get_medal(actualscore):
     if actualscore >= 10 and actualscore < 25:
@@ -65,7 +65,7 @@ def get_medal(actualscore):
         return ""
 
 def update_users_flair(username, reddit):
-    flairtext = next(reddit.flair(redditor=username))["flair_text"]
+    flairtext = next(reddit.subreddit(CONFIG["subreddit"]).flair(redditor=username))["flair_text"]
     if flairtext is None:
         flairtext = ""
     else:
@@ -79,7 +79,7 @@ def update_users_flair(username, reddit):
         newflair = "[%s%iλ] %s" % (get_medal(actualscore), actualscore, flairtext)
 
     logging.info("/u/%s had their flair updated" % username)
-    reddit.flair.set(redditor = username, text = newflair)
+    reddit.subreddit(CONFIG["subreddit"]).flair.set(redditor = username, text = newflair)
 
 def get_mods(reddit):
     return [str(i) for i in reddit.subreddit(CONFIG["subreddit"]).moderator()] + ["AutoModerator"]
@@ -105,7 +105,7 @@ def handle_mylambda(comment, reddit):
                 text += "\n\n[%i more...]" % len(links) - count
                 break
 
-    update_users_flair_from_comment(comment)
+    update_users_flair_from_comment(comment, reddit)
     return text
 
 def handle_givelambda(comment, reddit):
@@ -144,10 +144,10 @@ def handle_givelambda(comment, reddit):
             db.give_lambda(parentauthour, submission.permalink, timestamp = int(submission.created_utc))
     
     # update_users_flair_from_comment(comment)
-    update_users_flair_from_comment(comment.parent())
+    update_users_flair_from_comment(comment.parent(), reddit)
     return text
 
-def handle_takelambda(comment):
+def handle_takelambda(comment, reddit):
     try:
         splitted = comment.body.split()
         user = splitted[1].replace("/u/", "").replace("u/", "")
@@ -162,10 +162,10 @@ def handle_takelambda(comment):
         display("{ERROR while removing λ} %s" % e, concerning=comment.permalink)
         text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
 
-    update_users_flair(user)
+    update_users_flair(user, reddit)
     return text
 
-def handle_refundlambda(comment):
+def handle_refundlambda(comment, reddit):
     try:
         splitted = comment.body.split()
         user = splitted[1].replace("/u/", "").replace("u/", "")
@@ -180,10 +180,10 @@ def handle_refundlambda(comment):
         display("{ERROR while refunding λ} %s" % e, concerning=comment.permalink)
         text = r"An error was encountered. Please use the syntax `!refundlambda [user] [how much to add {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
 
-    update_users_flair(user)
+    update_users_flair(user, reddit)
     return text
 
-def handle_submission(submission):
+def handle_submission(submission, reddit):
     with database.Database() as db:
         score = db.get_lambda(str(submission.author))[0]
     if submission.link_flair_text in FREE_FLAIRS:
@@ -257,7 +257,7 @@ Views|%s
             except:
                 pass
 
-    update_users_flair(str(submission.author))
+    update_users_flair(str(submission.author), reddit)
     return text
 
 def handle_comment(comment, reddit):
@@ -269,10 +269,10 @@ def handle_comment(comment, reddit):
         response = handle_givelambda(comment, reddit)        
 
     if comment.body.startswith("!takelambda") and str(comment.author) in get_mods():
-        response = handle_takelambda(comment)
+        response = handle_takelambda(comment, reddit)
 
     if comment.body.startswith("!refundlambda") and str(comment.author) in get_mods():
-        response = handle_refundlambda(comment)
+        response = handle_refundlambda(comment, reddit)
 
     if response is not None:
         reply = comment.reply(response + COMMENT_TAIL)
@@ -292,22 +292,26 @@ def stream(reddit):
                         continue
 
                     db.add_to_blacklist(item.id)
-                    if type(item) is praw.models.reddit.comment.Comment:
+                    if str(type(item)) == "<class 'praw.models.reddit.comment.Comment'>":
                         handle_comment(item, reddit)
 
-                    elif type(item) is praw.models.reddit.submission.Submission:
+                    elif str(type(item)) == "<class 'praw.models.reddit.submission.Submission'>":
                         display("There has been a new submission: '%s', with flair '%s'" % (item.title, item.link_flair_text), concerning=item.permalink)
 
                         if str(item.author) not in get_mods(reddit):
-                            reply = item.reply(handle_submission(item) + COMMENT_TAIL)
+                            reply = item.reply(handle_submission(item, reddit) + COMMENT_TAIL)
                             reply.mod.distinguish(sticky = True)
                             reply.mod.approve()
 
 def main():
     reddit = praw.Reddit(**CONFIG["redditapi"])
     reddit.validate_on_submit = True
-    stream(reddit)
-
+    try:
+        stream(reddit)
+    except Exception as e:
+        display("{ERROR} %s" % str(e))
+        time.sleep(60)
+        main()
 
 
 if __name__ == "__main__":
