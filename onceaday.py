@@ -1,6 +1,6 @@
 import os
 from operator import itemgetter
-os.chdir("/root/SmallYTChannelBotSubmissions")
+os.chdir("/home/eden/SmallYTChannelBotSubmissions")
 
 import subreddit
 import database
