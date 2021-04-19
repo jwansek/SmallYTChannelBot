@@ -11,7 +11,12 @@ import json
 import re
 import os
 
-with open("config.json", "r") as f:
+if os.path.split(os.getcwd())[-1] == "onceaday":
+    configpath = "../config.json"
+else:
+    configpath = "config.json"
+
+with open(configpath, "r") as f:
     CONFIG = json.load(f)
 
 REDDIT = praw.Reddit(**CONFIG["redditapi"])

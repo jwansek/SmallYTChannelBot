@@ -2,8 +2,14 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import json
 import js2py
+import os
 
-with open("config.json", "r") as f:
+if os.path.split(os.getcwd())[-1] == "onceaday":
+    configpath = "../config.json"
+else:
+    configpath = "config.json"
+
+with open(configpath, "r") as f:
     CONFIG = json.load(f)
 
 ERROR_DICT =  {
