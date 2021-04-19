@@ -8,13 +8,13 @@ The source code for /u/SmallYTChannelBot.
 
 - Edit the configuration file and rename
 
-- Build the image:
+- Build the images:
 
-`sudo docker build -t smallytchannelbot:latest .`
+`sudo docker-compose build`
 
-- Start the container:
+- Start the containers:
 
-`sudo docker run --name smallytchannelbot --net=host -d smallytchannelbot`
+`sudo docker-compose up -d`
 
 # TODOs
 

@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+    sytc:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: jwansek/smallytchannelbot
+        network_mode: host
+    cron:
+        build:
+            context: .
+            dockerfile: ./onceaday/Dockerfile
+        network_mode: host
