@@ -225,7 +225,7 @@ Title|%s
 Thumbnail|[Link](%s)
 Views|%s
 Length|%s
-Likes/Dislikes|%s/%s
+Likes|%s
 Comments|%s
 Description|%s
 
@@ -244,7 +244,6 @@ Views|%s
                         ytdata["views"],
                         ytdata["length"],
                         ytdata["likes"],
-                        ytdata["dislikes"],
                         ytdata["comments"],
                         ytdata["description"],
                         ytdata["channel"],

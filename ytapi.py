@@ -24,7 +24,6 @@ ERROR_DICT =  {
         "length": "ERROR Video deleted?",
         "views": "ERROR Video deleted?",
         "likes": "ERROR Video deleted?",
-        "dislikes": "ERROR Video deleted?",
         "comments": "ERROR Video deleted?"
     }
 
@@ -95,7 +94,6 @@ def get_video_data(videoId):
         "length": _yt_time_to_norm(length),
         "views": stats["viewCount"],
         "likes": stats["likeCount"],
-        "dislikes": stats["dislikeCount"],
         "comments": stats["commentCount"]
     }
 
