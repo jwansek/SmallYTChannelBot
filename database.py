@@ -67,6 +67,11 @@ class Database:
             if commit:
                 self.__connection.commit()
 
+    def set_lambda(self, user, toset):
+        with self.__connection.cursor() as cursor:
+            cursor.execute("UPDATE users SET lambda = %s WHERE user_name = %s;", (toset, user))
+        self.__connection.commit()
+
     def change_lambda(self, user, changeby):
         with self.__connection.cursor() as cursor:
         #this will make it go negative. You must check this operation is allowed.

@@ -152,38 +152,19 @@ def handle_givelambda(comment, reddit):
     update_users_flair_from_comment(comment.parent(), reddit)
     return text
 
-def handle_takelambda(comment, reddit):
+def handle_setlambda(comment, reddit):
     try:
         splitted = comment.body.split()
         user = splitted[1].replace("/u/", "").replace("u/", "")
-        toremove = int(splitted[2].replace("\\", ""))
-        reason = " ".join(splitted[3:])
+        toset = int(splitted[2].replace("\\", ""))
     
         with database.Database() as db:
-            text = "/u/%s has had %iλ taken away from them for the reason '%s'. /u/%s now has %iλ" % (user, toremove, reason, user, db.get_lambda(user)[0] - toremove)
-            db.change_lambda(user, -toremove)
-        display("A moderator removed %i lambda from /u/%s for the reason '%s'" % (toremove,  user, reason), concerning=comment.permalink)
+            text = "/u/%s had their lambda set to %iλ by a moderator." % (user, toset)
+            db.set_lambda(user, toset)
+        display("A moderator set /u/%s λ to %d" % (user, toset), concerning=comment.permalink)
     except Exception as e:
-        display("{ERROR while removing λ} %s" % e, concerning=comment.permalink)
-        text = r"An error was encountered. Please use the syntax `!takelambda [user] [how much to remove {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
-
-    update_users_flair(user, reddit)
-    return text
-
-def handle_refundlambda(comment, reddit):
-    try:
-        splitted = comment.body.split()
-        user = splitted[1].replace("/u/", "").replace("u/", "")
-        toadd = int(splitted[2].replace("\\", ""))
-        reason = " ".join(splitted[3:])
-    
-        with database.Database() as db:
-            text = "/u/%s has had %iλ refunded for the reason '%s'. /u/%s now has %iλ" % (user, toadd, reason, user, db.get_lambda(user)[0] + toadd)
-            db.change_lambda(user, toadd)
-        display("A moderator refunded %i lambda from /u/%s for the reason '%s'" % (toadd,  user, reason), concerning=comment.permalink)
-    except Exception as e:
-        display("{ERROR while refunding λ} %s" % e, concerning=comment.permalink)
-        text = r"An error was encountered. Please use the syntax `!refundlambda [user] [how much to add {integer}] [reason]`" + "\n\nThe error was:\n\n" + str(e)
+        display("{ERROR while setting λ} %s" % e, concerning=comment.permalink)
+        text = r"An error was encountered. Please use the syntax `!setlambda <user> <set to {integer}>`" + "\n\nThe error was:\n\n" + str(e)
 
     update_users_flair(user, reddit)
     return text
@@ -272,11 +253,8 @@ def handle_comment(comment, reddit):
     if "!givelambda" in comment.body.lower() and str(comment.author) != "SmallYTChannelBot":
         response = handle_givelambda(comment, reddit)        
 
-    if comment.body.startswith("!takelambda") and str(comment.author) in get_mods():
-        response = handle_takelambda(comment, reddit)
-
-    if comment.body.startswith("!refundlambda") and str(comment.author) in get_mods():
-        response = handle_refundlambda(comment, reddit)
+    if comment.body.startswith("!setlambda") and str(comment.author) in get_mods(reddit):
+        response = handle_setlambda(comment, reddit)
 
     if response is not None:
         reply = comment.reply(response + COMMENT_TAIL)
