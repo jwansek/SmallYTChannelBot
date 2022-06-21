@@ -1,6 +1,1 @@
-praw==7.1.0
 matplotlib==3.3.4
-PyMySQL==0.9.3
-imgurpython==1.1.7
-google_api_python_client==1.12.8
-js2py==0.70

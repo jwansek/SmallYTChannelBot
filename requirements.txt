@@ -2,6 +2,6 @@
 google_api_python_client
 imgurpython
 js2py
-praw>=7.1.0
+praw
 sqlite3-to-mysql
 pymysql

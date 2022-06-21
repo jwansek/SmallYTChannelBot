@@ -30,7 +30,7 @@ def main():
     
     sidebar = subreddit.SUBREDDIT.mod.settings()["description"]
     oldtable = sidebar.split("------")[-1]
-    subreddit.SUBREDDIT.wiki['config/sidebar'].edit(sidebar.replace(oldtable, "\n\n## Monthly Lambda Leaderboard\n\n" + leaderboard))
+    subreddit.SUBREDDIT.wiki['config/sidebar'].edit(content = sidebar.replace(oldtable, "\n\n## Monthly Lambda Leaderboard\n\n" + leaderboard))
     subreddit.display("Updated in old reddit...")
     subreddit.display("Completed.")
 
@@ -44,8 +44,6 @@ def update_tables(scores, data):
     imageurl = upload_image(imagepath, date)
     bylambda = [i for i in sorted(scores, key = itemgetter(1), reverse = True) if i[0] not in mods][:10]
     byhelps = sorted(scores, key = itemgetter(2), reverse = True)[:10]
-
-    subreddit.SUBREDDIT.stylesheet.upload("wikigraph", imagepath)
 
     content += "\n\n##/r/SmallYTChannel lambda tables: %s" % date
 
@@ -66,15 +64,8 @@ def update_tables(scores, data):
     content += "the most up-to-date graph will be shown below. To see the graph at this date, follow [this link.](%s)" % (imageurl)
     content += "\n\n![](%%%%wikigraph%%%%)\n\nTotal λ in circulation|Useful advice given|Unique users\n:--|:--|:--\n%i|%i|%i" % (data[-1][1], data[-1][2], data[-1][3])
     
-    subreddit.REDDIT.subreddit("u_SmallYTChannelBot").submit("/r/SmallYTChannel Statistics: %s" % date, url = imageurl).reply(content).mod.distinguish(sticky = True)
+    subreddit.REDDIT.subreddit("u_SmallYTChannelBot").submit("/r/SmallYTChannel Statistics: %s" % date, url = imageurl).reply(content)
 
-    subreddit.SUBREDDIT.wiki["lambdatables"].edit(content, reason = "Update: %s" % date)
-    subreddit.SUBREDDIT.wiki[date].edit(content, reason = "Update: %s" % date)
-
-    currentdata = subreddit.SUBREDDIT.wiki["index"].content_md
-    currentdata += "\n\n* [%s](/r/SmallYTChannel/wiki/%s)" % (date, date)
-
-    subreddit.SUBREDDIT.wiki["index"].edit(currentdata, reason = "Update: %s" % date)
 
 def get_mods():
     return [str(i) for i in subreddit.SUBREDDIT.moderator()] + ["AutoModerator"]

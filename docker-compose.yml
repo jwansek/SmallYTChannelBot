@@ -11,4 +11,5 @@ services:
         build:
             context: .
             dockerfile: ./onceaday/Dockerfile
+        image: jwansek/smallytchannelbotoad
         network_mode: host
