@@ -7,6 +7,8 @@ services:
             dockerfile: Dockerfile
         image: jwansek/smallytchannelbot
         network_mode: host
+        volumes:
+            - ./logs/:/logs/
     cron:
         build:
             context: .

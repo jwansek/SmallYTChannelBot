@@ -27,19 +27,27 @@ FREE_FLAIRS = CONFIG["free_flairs"]
 
 IMGUR = ImgurClient(**CONFIG["imgurapi"])
 
-logging.basicConfig( 
-    format = "%(process)s\t[%(asctime)s]\t%(message)s", 
-    level = logging.INFO,
-    handlers=[
-        logging.FileHandler("actions.log"),
-        logging.StreamHandler()
-    ])
+# logging.basicConfig( 
+#     format = "%(process)s\t[%(asctime)s]\t%(message)s", 
+#     level = logging.INFO,
+#     handlers=[
+#         logging.FileHandler("actions.log"),
+#         logging.StreamHandler()
+#     ])
+
+handler = logging.FileHandler("/logs/api.log")
+handler.setLevel(logging.DEBUG)
+for logger_name in ("praw", "prawcore"):
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
 
 def get_time():
     return time.strftime("%b %d %Y %H:%M:%S", time.gmtime())
 
 def display(message, concerning = None):
-    logging.info(message)
+    # logging.info(message)
+    print(message)
 
     #yes it'd be prettier to do this with a logging.Handler, but alas
     #due to `concerning` it'd be more complicated than doing it like this
