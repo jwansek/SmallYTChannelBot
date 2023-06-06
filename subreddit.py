@@ -293,6 +293,7 @@ def stream(reddit):
                             reply = item.reply(handle_submission(item, reddit) + COMMENT_TAIL)
                             reply.mod.distinguish(sticky = True)
                             reply.mod.approve()
+            time.sleep(30)
 
 def main():
     reddit = praw.Reddit(**CONFIG["redditapi"])
