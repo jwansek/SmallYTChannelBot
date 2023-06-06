@@ -37,6 +37,7 @@ IMGUR = ImgurClient(**CONFIG["imgurapi"])
 
 handler = logging.FileHandler("/logs/api.log")
 handler.setLevel(logging.DEBUG)
+handler.setFormatter(logging.Formatter("[%(asctime)s]\t%(message)s"))
 for logger_name in ("praw", "prawcore"):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
