@@ -32,7 +32,9 @@ for timestamp in timestamps:
     except KeyError:
         d[nearest] = 1
 
+d_sorted = {k: v for k, v in sorted(d.items(), key=lambda x: x[0])}
+
 fig, ax = plt.subplots()
-ax.plot(list(d.keys()), list(d.values()))
+ax.plot(list(d_sorted.keys()), list(d_sorted.values()))
 
 plt.show()
