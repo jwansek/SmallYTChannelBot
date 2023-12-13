@@ -6,10 +6,21 @@ services:
             context: .
             dockerfile: Dockerfile
         image: jwansek/smallytchannelbot
-        network_mode: host
+        networks:
+            - db-network
+        external_links:
+            - mariadb:mysql
     cron:
         build:
             context: .
             dockerfile: ./onceaday/Dockerfile
         image: jwansek/smallytchannelbotoad
-        network_mode: host
+        networks:
+            - db-network
+        external_links:
+            - mariadb:mysql
+
+networks:
+    db-network:
+        external:
+            name: mariadb
