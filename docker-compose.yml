@@ -5,7 +5,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        image: jwansek/smallytchannelbot
+        image: r.vm.gl/smallytchannelbot
         networks:
             - db-network
         external_links:
@@ -14,7 +14,7 @@ services:
         build:
             context: .
             dockerfile: ./onceaday/Dockerfile
-        image: jwansek/smallytchannelbotoad
+        image: r.vm.gl/smallytchannelbotoad
         networks:
             - db-network
         external_links:

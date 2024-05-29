@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:22.04
 MAINTAINER Eden Attenborough "eddie.atten.ea29@gmail.com"
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y
