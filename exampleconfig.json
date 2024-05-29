@@ -32,5 +32,6 @@
         "passwd": "xxxxxxxxxxxxxxxx",
         "database": "SmallYTChannel"
     },
-    "min_comment_len": 120
+    "min_comment_len": 120,
+    "lambda_cost": 2
 }
