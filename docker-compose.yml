@@ -10,6 +10,8 @@ services:
             - db-network
         external_links:
             - mariadb:mysql
+        volumes:
+            - ./config.json:/app/config.json
     cron:
         build:
             context: .
@@ -19,6 +21,8 @@ services:
             - db-network
         external_links:
             - mariadb:mysql
+        volumes:
+            - ./config.json:/app/config.json
 
 networks:
     db-network:

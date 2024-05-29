@@ -191,9 +191,9 @@ def handle_submission(submission, reddit):
     else:
         if score < CONFIG["lambda_cost"]:
             text = """Thank you for submitting to /r/SmallYTChannel. Unfortunally, you submission has been removed since you do not have enough λ. You need
-            %iλ to post. You currently have %iλ. For more information, read the [FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % score
+            %iλ to post. You currently have %iλ. For more information, read the [FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)""" % (CONFIG["lambda_cost"], score)
             submission.mod.remove()
-            display("/u/%s had their submission removed for insufficient lambda." % (CONFIG["lambda_cost"], submission.author), concerning=submission.permalink)
+            display("/u/%s had their submission removed for insufficient lambda." % (submission.author), concerning=submission.permalink)
         else:
             text = """Thank you for submitting to /r/SmallYTChannel. You have spent %iλ to submit here, making your current balance %iλ.
             /u/%s, please comment `!givelambda` to the most helpful advice you are given. 
