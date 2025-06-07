@@ -1,4 +1,4 @@
-FROM smallytchannelbot
+FROM reg.reaweb.uk/smallytchannelbot
 MAINTAINER Eden Attenborough "eddie.atten.ea29@gmail.com"
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get install -y tzdata cron

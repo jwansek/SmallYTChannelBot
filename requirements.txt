@@ -5,3 +5,4 @@ js2py
 praw
 sqlite3-to-mysql
 pymysql
+jinja2
