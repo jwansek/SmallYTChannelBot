@@ -5,7 +5,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        image: r.vm.gl/smallytchannelbot
+        image: smallytchannelbot
         networks:
             - db-network
         external_links:
@@ -16,11 +16,13 @@ services:
         build:
             context: .
             dockerfile: ./onceaday/Dockerfile
-        image: r.vm.gl/smallytchannelbotoad
+        image: smallytchannelbot_oad
         networks:
             - db-network
         external_links:
             - mariadb:mysql
+        depends_on:
+            - sytc
         volumes:
             - ./config.json:/app/config.json
 
