@@ -1,8 +1,7 @@
 import os
 import sys
 
-os.chdir(sys.argv[1])
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), ".."))
 
 from operator import itemgetter
 import subreddit
@@ -37,6 +36,7 @@ def main():
     subreddit.logging.info("Called OAD prog @ %s" % subreddit.get_time())
 
 def update_tables(scores, data):
+    # really ought to switch to jinja for this...
     content = ""
     date = str(datetime.date.today())
     mods = get_mods()

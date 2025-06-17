@@ -8,6 +8,7 @@ api.log
 config.json
 *.log
 *.db
+*.sql*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

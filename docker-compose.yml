@@ -15,8 +15,8 @@ services:
     cron:
         build:
             context: .
-            dockerfile: ./onceaday/Dockerfile
-        image: reg.reaweb.uk/smallytchannelbot_oad
+            dockerfile: ./cron/Dockerfile
+        image: reg.reaweb.uk/smallytchannelbot_cron
         networks:
             - db-network
         external_links:

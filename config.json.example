@@ -1,0 +1,38 @@
+{
+    "discord_webhook": "https://discord.com/api/webhooks/*********************/******************************************************",
+    "redditapi":
+    {
+        "client_id": "***************",
+        "client_secret": "************************",
+        "user_agent": "SmallYTChannelBot",
+        "username": "SmallYTChannelBot",
+        "password": "*******************"
+    },
+    "imgurapi":
+    {
+        "client_id": "***************",
+        "client_secret": "********************************"
+    },
+    "youtubeapi":
+    {
+        "developer_key": "******************************"
+    },
+    "subreddit": "SmallYTChannel",
+    "comment_tail": "\n\n\n ^/u/SmallYTChannelBot ^*made* ^*by* ^/u/jwnskanzkwk. ^*For* ^*more* ^*information,* ^*read* ^*the* ^[FAQ.](https://www.reddit.com/user/SmallYTChannelBot/comments/a4u7qj/smallytchannelbot_faq/)",
+    "free_flairs":
+    [
+        "Discussion",
+        "Meta", 
+        "Collab"
+    ],
+    "mysql":
+    {
+        "host": "mysql",
+        "port": 3306,
+        "user": "root",
+        "passwd": "******************",
+        "database": "SmallYTChannel"
+    },
+    "min_comment_len": 120,
+    "lambda_cost": 1
+}
