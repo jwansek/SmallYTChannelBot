@@ -4,10 +4,9 @@ import json
 import js2py
 import os
 
-if os.path.split(os.getcwd())[-1] == "onceaday":
-    configpath = "../config.json"
-else:
-    configpath = "config.json"
+configpath = os.path.join(os.path.dirname(__file__), "config.json")
+if not os.path.exists(configpath):
+    configpath = os.path.join(os.path.dirname(__file__), "..", "config.json")
 
 with open(configpath, "r") as f:
     CONFIG = json.load(f)
