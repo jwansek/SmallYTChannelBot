@@ -7,7 +7,7 @@ from operator import itemgetter
 import subreddit
 import database
 import datetime
-import graph
+# import graph
 
 def main():
     subreddit.display("Starting every day program...")
