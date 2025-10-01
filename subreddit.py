@@ -1,4 +1,4 @@
-from imgurpython import ImgurClient
+# from imgurpython import ImgurClient
 from operator import itemgetter
 
 import praw.models
@@ -30,7 +30,7 @@ SUBREDDIT = REDDIT.subreddit(CONFIG["subreddit"])
 COMMENT_TAIL = CONFIG["comment_tail"]
 FREE_FLAIRS = CONFIG["free_flairs"]
 
-IMGUR = ImgurClient(**CONFIG["imgurapi"])
+# IMGUR = ImgurClient(**CONFIG["imgurapi"])
 
 logging.basicConfig( 
     format = "%(message)s", 
